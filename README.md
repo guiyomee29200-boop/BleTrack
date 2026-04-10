@@ -103,8 +103,8 @@ Accéder à `http://<ip-pi>:8000`
 
 | Appareil  | WiFi (DHCP)    | RJ45 (statique) | Rôle            |
 |-----------|----------------|-----------------|-----------------|
-| Pi maître | DHCP TouchePas | 10.0.1.10/24    | Serveur + MQTT  |
-| Pi 500    | DHCP TouchePas | 10.0.1.20/24    | Gateway BLE gw2 |
+| Pi maître | DHCP | 10.0.1.10/24    | Serveur + MQTT  |
+| Pi 500    | DHCP | 10.0.1.20/24    | Gateway BLE gw2 |
 
 Voir [docs/plan-adressage-ip.md](docs/plan-adressage-ip.md) pour les détails réseau.
 Voir [deploy/README.md](deploy/README.md) pour le déploiement sur les Pi.
