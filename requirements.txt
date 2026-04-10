@@ -1,0 +1,14 @@
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+python-jose[cryptography]>=3.3.0
+bcrypt>=4.1.0
+aiosqlite>=0.20.0
+pyyaml>=6.0.0
+pydantic>=2.0.0
+shapely>=2.0.0
+numpy>=1.24.0
+python-multipart>=0.0.9
+# MQTT (optionnel - activer quand Mosquitto est disponible)
+# aiomqtt>=2.0.0
+# Redis (optionnel - activer si Redis disponible)
+# redis>=5.0.0

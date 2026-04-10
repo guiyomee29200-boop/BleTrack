@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLETrack — Alertes</title>
+    <link rel="icon" href="data:,">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: system-ui, sans-serif;
+            background: #0a0f18;
+            color: #c8d6e5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 32px 16px;
+            gap: 16px;
+        }
+
+        h1 { font-size: 18px; color: #7a90a8; letter-spacing: 1px; text-transform: uppercase; }
+
+        #status-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            color: #4a6080;
+        }
+        #ws-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #4a6080;
+        }
+        #ws-dot.ok  { background: #28a068; }
+        #ws-dot.err { background: #c44030; }
+
+        #btn-sound {
+            background: none;
+            border: 1px solid #2d4160;
+            color: #7a90a8;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: border-color 0.2s;
+        }
+        #btn-sound:hover { border-color: #3da5e8; }
+
+        #cards {
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .card {
+            background: #101822;
+            border: 1px solid rgba(45,65,95,0.4);
+            border-left: 4px solid #28a068;
+            border-radius: 6px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: border-color 0.3s;
+        }
+        .card.offline { border-left-color: #c47830; }
+
+        .card-dot {
+            width: 12px; height: 12px; border-radius: 50%;
+            background: #28a068;
+            flex-shrink: 0;
+        }
+        .card.offline .card-dot { background: #c47830; }
+
+        .card-name { font-size: 15px; font-weight: 600; }
+        .card-state {
+            font-size: 11px;
+            color: #28a068;
+            margin-top: 2px;
+        }
+        .card.offline .card-state { color: #c47830; }
+        .card-since { font-size: 10px; color: #4a6080; margin-top: 2px; }
+
+        #empty {
+            color: #4a6080;
+            font-size: 13px;
+            margin-top: 32px;
+        }
+
+        #toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+        .toast {
+            background: #162030;
+            border: 1px solid #2d4160;
+            color: #c8d6e5;
+            font-size: 13px;
+            padding: 10px 14px;
+            border-radius: 4px;
+            animation: tin 0.2s ease;
+            transition: opacity 0.4s;
+        }
+        .toast.err { border-left: 3px solid #c47830; }
+        .toast.ok  { border-left: 3px solid #28a068; }
+        @keyframes tin { from { transform: translateX(20px); opacity:0; } to { transform:none; opacity:1; } }
+    </style>
+</head>
+<body>
+
+<h1>BLETrack — Alertes BLE</h1>
+
+<div id="status-bar">
+    <div id="ws-dot"></div>
+    <span id="ws-label">Connexion…</span>
+</div>
+
+<button id="btn-sound" onclick="toggleSound()" title="Activer/désactiver le son">🔔</button>
+
+<div id="cards"></div>
+<div id="empty">En attente de données…</div>
+
+<div id="toast-container"></div>
+
+<script>
+// ─── SON ──────────────────────────────────────────────────────────────────────
+let _soundEnabled = localStorage.getItem('bletrack-sound') !== 'off';
+
+function toggleSound() {
+    _soundEnabled = !_soundEnabled;
+    localStorage.setItem('bletrack-sound', _soundEnabled ? 'on' : 'off');
+    document.getElementById('btn-sound').textContent = _soundEnabled ? '🔔' : '🔕';
+    if (_soundEnabled) _bleep(880, 0.1);
+}
+
+function _bleep(freq, dur, gain = 0.3) {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const vol = ctx.createGain();
+        osc.connect(vol); vol.connect(ctx.destination);
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(freq * 0.5, ctx.currentTime + dur);
+        vol.gain.setValueAtTime(gain, ctx.currentTime);
+        vol.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+        osc.start(); osc.stop(ctx.currentTime + dur);
+        osc.onended = () => ctx.close();
+    } catch(_) {}
+}
+
+function playAlert() {
+    if (!_soundEnabled) return;
+    _bleep(880, 0.15);
+    setTimeout(() => _bleep(660, 0.2), 180);
+}
+
+// ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
+function requestNotifPermission() {
+    if ('Notification' in window && Notification.permission === 'default')
+        Notification.requestPermission();
+}
+
+function sendNotif(title, body) {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    new Notification(title, { body, icon: 'data:,' });
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+function showToast(msg, ok) {
+    const el = document.createElement('div');
+    el.className = 'toast ' + (ok ? 'ok' : 'err');
+    el.textContent = msg;
+    document.getElementById('toast-container').appendChild(el);
+    setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 400); }, 3000);
+}
+
+// ─── ÉTAT ─────────────────────────────────────────────────────────────────────
+const TAGS = {};       // { tag_mac: { name, online, since } }
+let _ready = false;
+
+function updateTag(t) {
+    const prev = TAGS[t.tag_mac];
+    const wasOffline = prev && !prev.online;
+    const isOffline  = !t.online;
+
+    if (!prev) {
+        TAGS[t.tag_mac] = { name: t.name, online: t.online, since: new Date() };
+        return;
+    }
+
+    if (isOffline && !wasOffline) {
+        TAGS[t.tag_mac] = { name: t.name, online: false, since: new Date() };
+        if (_ready) {
+            playAlert();
+            showToast(`Signal BLE perdu : ${t.name}`, false);
+            sendNotif('BLETrack — Signal perdu', `${t.name} est hors de portée`);
+        }
+    } else if (!isOffline && wasOffline) {
+        TAGS[t.tag_mac] = { name: t.name, online: true, since: new Date() };
+        if (_ready) {
+            showToast(`Signal BLE retrouvé : ${t.name}`, true);
+            sendNotif('BLETrack — Signal retrouvé', `${t.name} est de nouveau visible`);
+        }
+    } else {
+        TAGS[t.tag_mac].online = t.online;
+    }
+}
+
+function render() {
+    const cards = document.getElementById('cards');
+    const empty = document.getElementById('empty');
+    const keys  = Object.keys(TAGS);
+    if (!keys.length) { empty.style.display = ''; cards.innerHTML = ''; return; }
+    empty.style.display = 'none';
+
+    // Offline en premier
+    const sorted = keys.sort((a, b) => {
+        if (!TAGS[a].online && TAGS[b].online) return -1;
+        if (TAGS[a].online && !TAGS[b].online) return 1;
+        return TAGS[a].name.localeCompare(TAGS[b].name);
+    });
+
+    cards.innerHTML = sorted.map(mac => {
+        const t = TAGS[mac];
+        const cls = t.online ? '' : 'offline';
+        const state = t.online ? 'En ligne' : 'Hors ligne';
+        const since = t.since.toLocaleTimeString('fr-FR');
+        return `<div class="card ${cls}">
+            <div class="card-dot"></div>
+            <div>
+                <div class="card-name">${t.name}</div>
+                <div class="card-state">${state}</div>
+                <div class="card-since">Depuis ${since}</div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ─── WEBSOCKET ────────────────────────────────────────────────────────────────
+let ws, reconnectDelay = 2000;
+
+function connect() {
+    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    ws = new WebSocket(`${proto}//${location.host}/ws/alerts`);
+
+    ws.onopen = () => {
+        document.getElementById('ws-dot').className = 'ok';
+        document.getElementById('ws-label').textContent = 'Connecté';
+        reconnectDelay = 2000;
+        requestNotifPermission();
+    };
+
+    ws.onmessage = e => {
+        const msg = JSON.parse(e.data);
+        if (msg.type !== 'status') return;
+        msg.tags.forEach(updateTag);
+        if (!_ready) _ready = true;
+        render();
+    };
+
+    ws.onclose = ws.onerror = () => {
+        document.getElementById('ws-dot').className = 'err';
+        document.getElementById('ws-label').textContent = 'Déconnecté — reconnexion…';
+        setTimeout(connect, reconnectDelay);
+        reconnectDelay = Math.min(reconnectDelay * 2, 30000);
+    };
+
+    setInterval(() => { if (ws && ws.readyState === 1) ws.send('ping'); }, 20000);
+}
+
+// Init
+document.getElementById('btn-sound').textContent = _soundEnabled ? '🔔' : '🔕';
+connect();
+</script>
+</body>
+</html>

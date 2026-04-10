@@ -1,0 +1,2395 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLETrack — Administration</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Chakra+Petch:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #060a0f;
+            --bg-panel: #0b1018;
+            --bg-surface: #101822;
+            --bg-elevated: #162030;
+            --bg-hover: #1a2840;
+            --bg-input: #0d1420;
+            --border-dim: rgba(45, 65, 95, 0.4);
+            --border-active: rgba(60, 140, 200, 0.3);
+            --border-bright: rgba(60, 140, 200, 0.5);
+            --text-primary: #c8d6e5;
+            --text-secondary: #7a90a8;
+            --text-dim: #4a6080;
+            --text-ghost: #253545;
+            --accent: #2d8ac4;
+            --accent-bright: #3da5e8;
+            --accent-glow: rgba(45, 138, 196, 0.12);
+            --accent-glow-strong: rgba(45, 138, 196, 0.25);
+            --danger: #c44030;
+            --danger-dim: rgba(196, 64, 48, 0.12);
+            --danger-border: rgba(196, 64, 48, 0.3);
+            --success: #28a068;
+            --success-dim: rgba(40, 160, 104, 0.12);
+            --success-border: rgba(40, 160, 104, 0.35);
+            --amber: #c49030;
+            --amber-dim: rgba(196, 144, 48, 0.10);
+            --amber-border: rgba(196, 144, 48, 0.3);
+            --purple: #8870c4;
+            --purple-dim: rgba(136, 112, 196, 0.10);
+            --purple-border: rgba(136, 112, 196, 0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'IBM Plex Mono', monospace;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app {
+            display: grid;
+            grid-template-rows: 44px 1fr 32px;
+            height: 100vh;
+        }
+
+        /* --- Header --- */
+        .header {
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border-dim);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .header-logo {
+            font-family: 'Chakra Petch', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .header-logo span { color: var(--accent); }
+
+        .header-mode {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 9px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--purple-border);
+            background: var(--purple-dim);
+            color: var(--purple);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .clock {
+            font-size: 11px;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-secondary);
+            letter-spacing: 1.5px;
+        }
+
+        .btn-header {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 4px 12px;
+            background: transparent;
+            border: 1px solid var(--border-dim);
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-header:hover {
+            border-color: var(--border-active);
+            color: var(--text-secondary);
+            background: var(--bg-elevated);
+        }
+
+        .btn-header.combat {
+            border-color: var(--danger-border);
+            color: var(--danger);
+            background: var(--danger-dim);
+        }
+
+        .btn-header.combat:hover {
+            background: rgba(196, 64, 48, 0.2);
+        }
+
+        /* --- Contenu principal --- */
+        .main {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            overflow: hidden;
+        }
+
+        /* --- Navigation onglets (sidebar) --- */
+        .nav-sidebar {
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border-dim);
+            padding: 12px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .nav-section-label {
+            font-size: 8px;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: var(--text-ghost);
+            padding: 12px 16px 4px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            font-size: 11px;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.15s;
+            border-left: 2px solid transparent;
+            position: relative;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-hover);
+            color: var(--text-secondary);
+        }
+
+        .nav-item.active {
+            background: var(--accent-glow);
+            color: var(--accent-bright);
+            border-left-color: var(--accent);
+        }
+
+        .nav-item svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            font-size: 9px;
+            padding: 1px 6px;
+            background: var(--bg-elevated);
+            color: var(--text-dim);
+            border: 1px solid var(--border-dim);
+        }
+
+        .nav-badge.alert {
+            background: var(--danger-dim);
+            border-color: var(--danger-border);
+            color: var(--danger);
+        }
+
+        /* --- Panneau de contenu --- */
+        .content-panel {
+            overflow-y: auto;
+            padding: 20px 24px;
+        }
+
+        .content-panel::-webkit-scrollbar { width: 4px; }
+        .content-panel::-webkit-scrollbar-track { background: transparent; }
+        .content-panel::-webkit-scrollbar-thumb { background: var(--border-dim); }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .content-title {
+            font-family: 'Chakra Petch', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .content-desc {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-bottom: 20px;
+        }
+
+        /* --- Toolbar (au-dessus des tables) --- */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            gap: 10px;
+        }
+
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toolbar-search {
+            position: relative;
+        }
+
+        .toolbar-search input {
+            width: 220px;
+            padding: 5px 10px 5px 28px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-dim);
+            color: var(--text-primary);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .toolbar-search input:focus { border-color: var(--accent); }
+        .toolbar-search input::placeholder { color: var(--text-ghost); }
+
+        .toolbar-search svg {
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            stroke: var(--text-dim);
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+        }
+
+        .btn-action {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 5px 14px;
+            background: var(--accent-glow);
+            border: 1px solid var(--border-active);
+            color: var(--accent-bright);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-action:hover {
+            background: var(--accent-glow-strong);
+            border-color: var(--accent);
+        }
+
+        .btn-action.danger {
+            background: var(--danger-dim);
+            border-color: var(--danger-border);
+            color: var(--danger);
+        }
+
+        .btn-action.danger:hover {
+            background: rgba(196, 64, 48, 0.2);
+        }
+
+        /* --- Tables --- */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+
+        .data-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        .data-table th {
+            background: var(--bg-surface);
+            padding: 8px 10px;
+            text-align: left;
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            border-bottom: 1px solid var(--border-dim);
+            white-space: nowrap;
+        }
+
+        .data-table td {
+            padding: 7px 10px;
+            border-bottom: 1px solid rgba(45, 65, 95, 0.15);
+            vertical-align: middle;
+        }
+
+        .data-table tbody tr {
+            transition: background 0.1s;
+        }
+
+        .data-table tbody tr:hover {
+            background: var(--bg-hover);
+        }
+
+        .role-badge {
+            font-size: 8px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 2px 6px;
+            display: inline-block;
+        }
+
+        .role-badge.admin {
+            background: var(--purple-dim);
+            border: 1px solid var(--purple-border);
+            color: var(--purple);
+        }
+
+        .role-badge.operator {
+            background: var(--accent-glow);
+            border: 1px solid var(--border-active);
+            color: var(--accent);
+        }
+
+        .status-badge {
+            font-size: 8px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 2px 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-badge.online {
+            background: var(--success-dim);
+            border: 1px solid var(--success-border);
+            color: var(--success);
+        }
+
+        .status-badge.offline {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-dim);
+            color: var(--text-dim);
+        }
+
+        .status-badge .s-dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .log-result {
+            font-size: 8px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 2px 6px;
+            display: inline-block;
+        }
+
+        .log-result.success {
+            background: var(--success-dim);
+            border: 1px solid var(--success-border);
+            color: var(--success);
+        }
+
+        .log-result.fail {
+            background: var(--danger-dim);
+            border: 1px solid var(--danger-border);
+            color: var(--danger);
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-table {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 8px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 2px 8px;
+            background: transparent;
+            border: 1px solid var(--border-dim);
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-table:hover {
+            border-color: var(--border-active);
+            color: var(--text-secondary);
+            background: var(--bg-elevated);
+        }
+
+        .btn-table.delete:hover {
+            border-color: var(--danger-border);
+            color: var(--danger);
+            background: var(--danger-dim);
+        }
+
+        .mac-cell {
+            font-size: 10px;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-secondary);
+        }
+
+        .zone-tag {
+            font-size: 8px;
+            letter-spacing: 0.5px;
+            padding: 2px 6px;
+            display: inline-block;
+        }
+
+        .zone-tag.normal {
+            background: var(--purple-dim);
+            border: 1px solid var(--purple-border);
+            color: var(--purple);
+        }
+
+        .zone-tag.restricted {
+            background: var(--danger-dim);
+            border: 1px solid var(--danger-border);
+            color: var(--danger);
+        }
+
+        /* --- Formulaire modal inline --- */
+        .form-panel {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-dim);
+            padding: 16px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .form-panel.visible { display: block; }
+
+        .form-title {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .form-field.full { grid-column: 1 / -1; }
+
+        .form-field label {
+            font-size: 9px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+
+        .form-field input,
+        .form-field select {
+            padding: 6px 10px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-dim);
+            color: var(--text-primary);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-field input:focus,
+        .form-field select:focus {
+            border-color: var(--accent);
+        }
+
+        .form-field select {
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .form-field select option {
+            background: var(--bg-surface);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        /* --- Calibration section --- */
+        .cal-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .cal-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-dim);
+            padding: 14px;
+        }
+
+        .cal-label {
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+        }
+
+        .cal-value {
+            font-family: 'Chakra Petch', sans-serif;
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--accent-bright);
+            margin-bottom: 4px;
+        }
+
+        .cal-unit {
+            font-size: 10px;
+            color: var(--text-dim);
+        }
+
+        .cal-slider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .cal-slider input[type="range"] {
+            flex: 1;
+            height: 3px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--border-dim);
+            outline: none;
+            border-radius: 2px;
+        }
+
+        .cal-slider input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid var(--bg-deep);
+        }
+
+        .cal-slider-val {
+            font-size: 11px;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-primary);
+            min-width: 36px;
+            text-align: right;
+        }
+
+        .gw-status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .gw-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-dim);
+            padding: 12px;
+        }
+
+        .gw-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .gw-card-title {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .gw-card-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--text-dim);
+            padding: 2px 0;
+        }
+
+        .gw-card-row span:last-child {
+            color: var(--text-secondary);
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* --- Footer --- */
+        .footer {
+            background: var(--bg-panel);
+            border-top: 1px solid var(--border-dim);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+
+        .footer-left, .footer-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .f-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .f-dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+        }
+
+        .f-dot.green { background: var(--success); box-shadow: 0 0 3px var(--success); }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-dim);
+            font-size: 11px;
+        }
+
+        .empty-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+            opacity: 0.3;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app">
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <div class="header-logo">BLE<span>Track</span></div>
+            <div class="header-mode">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4"/></svg>
+                Administration
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="clock" id="clock">--:--:--</div>
+            <button class="btn-header combat" onclick="window.location.href='/combat'">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:inline;vertical-align:-1px;margin-right:4px"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                Combat
+            </button>
+            <button class="btn-header" onclick="window.location.href='/'">Déconnexion</button>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <div class="main">
+
+        <!-- Navigation sidebar -->
+        <nav class="nav-sidebar">
+            <div class="nav-section-label">Gestion</div>
+            <div class="nav-item active" data-tab="users" onclick="switchTab('users', this)">
+                <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+                Utilisateurs
+                <span class="nav-badge">6</span>
+            </div>
+            <div class="nav-item" data-tab="personnel" onclick="switchTab('personnel', this)">
+                <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                Personnel
+                <span class="nav-badge">15</span>
+            </div>
+            <div class="nav-item" data-tab="zones" onclick="switchTab('zones', this)">
+                <svg viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+                Zones
+                <span class="nav-badge">3</span>
+            </div>
+
+            <div class="nav-section-label">Surveillance</div>
+            <div class="nav-item" data-tab="logs" onclick="switchTab('logs', this)">
+                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                Logs connexion
+                <span class="nav-badge alert">24</span>
+            </div>
+
+            <div class="nav-section-label">Système</div>
+            <div class="nav-item" data-tab="calibration" onclick="switchTab('calibration', this)">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                Calibration BLE
+            </div>
+            <div class="nav-item" data-tab="gateways" onclick="switchTab('gateways', this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg>
+                Gateways
+                <span class="nav-badge" id="gw-badge">0</span>
+            </div>
+            <div class="nav-item" data-tab="plan" onclick="switchTab('plan', this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h18M9 21V9"/></svg>
+                Plan du bâtiment
+            </div>
+            <div class="nav-item" data-tab="gwlogs" onclick="switchTab('gwlogs', this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                Logs Gateways
+                <span class="nav-badge" id="gwlog-badge" style="display:none">0</span>
+            </div>
+        </nav>
+
+        <!-- Panneaux de contenu -->
+        <div class="content-panel">
+
+            <!-- ===== UTILISATEURS ===== -->
+            <div class="tab-content active" id="tab-users">
+                <div class="content-title">Comptes utilisateurs</div>
+                <div class="content-desc">Gestion des accès au système. Rôles : Admin (accès complet) / Opérateur (mode Combat uniquement).</div>
+
+                <div class="toolbar">
+                    <div class="toolbar-left">
+                        <div class="toolbar-search">
+                            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            <input type="text" placeholder="Rechercher...">
+                        </div>
+                    </div>
+                    <button class="btn-action" onclick="toggleForm('form-user')">+ Nouveau compte</button>
+                </div>
+
+                <div class="form-panel" id="form-user">
+                    <div class="form-title">Créer un compte</div>
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label>Identifiant</label>
+                            <input type="text" placeholder="ex: j.dupont">
+                        </div>
+                        <div class="form-field">
+                            <label>Mot de passe</label>
+                            <input type="password" placeholder="Min. 8 caractères">
+                        </div>
+                        <div class="form-field">
+                            <label>Nom complet</label>
+                            <input type="text" placeholder="Jean Dupont">
+                        </div>
+                        <div class="form-field">
+                            <label>Rôle</label>
+                            <select>
+                                <option value="operator">Opérateur</option>
+                                <option value="admin">Administrateur</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn-action">Créer le compte</button>
+                        <button class="btn-action danger" onclick="toggleForm('form-user')">Annuler</button>
+                    </div>
+                </div>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Identifiant</th>
+                            <th>Nom</th>
+                            <th>Rôle</th>
+                            <th>Dernière connexion</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>admin</td>
+                            <td>Administrateur</td>
+                            <td><span class="role-badge admin">Admin</span></td>
+                            <td style="font-variant-numeric:tabular-nums; color:var(--text-secondary)">18/03/2026 14:32</td>
+                            <td><div class="table-actions"><button class="btn-table">Modifier</button></div></td>
+                        </tr>
+                        <tr>
+                            <td>m.dupuis</td>
+                            <td>Martin Dupuis</td>
+                            <td><span class="role-badge operator">Opérateur</span></td>
+                            <td style="font-variant-numeric:tabular-nums; color:var(--text-secondary)">18/03/2026 13:15</td>
+                            <td><div class="table-actions"><button class="btn-table">Modifier</button><button class="btn-table delete">Supprimer</button></div></td>
+                        </tr>
+                        <tr>
+                            <td>c.morel</td>
+                            <td>Claire Morel</td>
+                            <td><span class="role-badge operator">Opérateur</span></td>
+                            <td style="font-variant-numeric:tabular-nums; color:var(--text-secondary)">18/03/2026 09:48</td>
+                            <td><div class="table-actions"><button class="btn-table">Modifier</button><button class="btn-table delete">Supprimer</button></div></td>
+                        </tr>
+                        <tr>
+                            <td>t.bernard</td>
+                            <td>Thomas Bernard</td>
+                            <td><span class="role-badge admin">Admin</span></td>
+                            <td style="font-variant-numeric:tabular-nums; color:var(--text-secondary)">17/03/2026 18:22</td>
+                            <td><div class="table-actions"><button class="btn-table">Modifier</button><button class="btn-table delete">Supprimer</button></div></td>
+                        </tr>
+                        <tr>
+                            <td>s.laurent</td>
+                            <td>Sophie Laurent</td>
+                            <td><span class="role-badge operator">Opérateur</span></td>
+                            <td style="font-variant-numeric:tabular-nums; color:var(--text-secondary)">17/03/2026 14:05</td>
+                            <td><div class="table-actions"><button class="btn-table">Modifier</button><button class="btn-table delete">Supprimer</button></div></td>
+                        </tr>
+                        <tr>
+                            <td>l.petit</td>
+                            <td>Lucas Petit</td>
+                            <td><span class="role-badge operator">Opérateur</span></td>
+                            <td style="font-variant-numeric:tabular-nums; color:var(--text-secondary)">16/03/2026 08:30</td>
+                            <td><div class="table-actions"><button class="btn-table">Modifier</button><button class="btn-table delete">Supprimer</button></div></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ===== PERSONNEL / BEACONS ===== -->
+            <div class="tab-content" id="tab-personnel">
+                <div class="content-title">Personnel &amp; Beacons</div>
+                <div class="content-desc">Association des beacons H2/H2A aux membres du personnel. Chaque beacon est identifié par son adresse MAC.</div>
+
+                <div class="toolbar">
+                    <div class="toolbar-left">
+                        <div class="toolbar-search">
+                            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            <input type="text" placeholder="Rechercher par nom ou MAC...">
+                        </div>
+                    </div>
+                    <button class="btn-action" onclick="toggleForm('form-personnel')">+ Ajouter</button>
+                </div>
+
+                <div class="form-panel" id="form-personnel">
+                    <div class="form-title">Enregistrer un beacon</div>
+                    <div class="form-grid">
+                        <div class="form-field" style="position:relative">
+                            <label>Adresse MAC</label>
+                            <div style="display:flex;gap:6px">
+                                <input type="text" id="input-mac" placeholder="AA:BB:CC:DD:EE:FF" style="flex:1">
+                                <button class="btn-action" id="btn-ble-scan" onclick="bleScan()" style="white-space:nowrap;padding:0 10px">&#x1F4F6; Scanner</button>
+                            </div>
+                            <div id="ble-results" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg-surface);border:1px solid var(--border);border-radius:4px;max-height:220px;overflow-y:auto;z-index:50;margin-top:2px"></div>
+                        </div>
+                        <div class="form-field">
+                            <label>Nom complet</label>
+                            <input type="text" placeholder="Jean Dupont">
+                        </div>
+                        <div class="form-field">
+                            <label>Rôle / Fonction</label>
+                            <input type="text" placeholder="Technicien">
+                        </div>
+                        <div class="form-field">
+                            <label>N° badge</label>
+                            <input type="text" placeholder="EMP-001">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn-action" id="btn-save-personnel">Enregistrer</button>
+                        <button class="btn-action danger" onclick="toggleForm('form-personnel')">Annuler</button>
+                    </div>
+                </div>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>MAC Beacon</th>
+                            <th>Rôle</th>
+                            <th>Badge</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Martin Dupuis</td><td class="mac-cell">A1:B2:C3:D4:01:AA</td><td>Technicien</td><td>EMP-001</td><td><span class="status-badge online"><span class="s-dot"></span> En ligne</span></td><td><div class="table-actions"><button class="btn-table">Modifier</button><button class="btn-table delete">Supprimer</button></div></td></tr>
+                        <tr><td>Claire Morel</td><td class="mac-cell">A1:B2:C3:D4:02:BB</td><td>Infirmière</td><td>EMP-002</td><td><span class="status-badge online"><span class="s-dot"></span> En ligne</span></td><td><div class="table-actions"><button class="btn-table">Modifier</button><button class="btn-table delete">Supprimer</button></div></td></tr>
+                        <tr><td>Thomas Bernard</td><td class="mac-cell">A1:B2:C3:D4:03:CC</td><td>Opérateur</td><td>EMP-003</td><td><span class="status-badge online"><span class="s-dot"></span> En ligne</span></td><td><div class="table-actions"><button class="btn-table">Modifier</button><button class="btn-table delete">Supprimer</button></div></td></tr>
+                        <tr><td>Antoine Roux</td><td class="mac-cell">A1:B2:C3:D4:0D:DD</td><td>Agent</td><td>EMP-013</td><td><span class="status-badge offline"><span class="s-dot"></span> Hors ligne</span></td><td><div class="table-actions"><button class="btn-table">Modifier</button><button class="btn-table delete">Supprimer</button></div></td></tr>
+                        <tr><td>Manon Fournier</td><td class="mac-cell">A1:B2:C3:D4:0E:EE</td><td>Infirmière</td><td>EMP-014</td><td><span class="status-badge offline"><span class="s-dot"></span> Hors ligne</span></td><td><div class="table-actions"><button class="btn-table">Modifier</button><button class="btn-table delete">Supprimer</button></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ===== ZONES ===== -->
+            <div class="tab-content" id="tab-zones">
+                <div class="content-title">Zones d'alerte</div>
+                <div class="content-desc">Définition des zones par étage. Une alerte est déclenchée lorsqu'un personnel entre ou sort d'une zone surveillée.</div>
+
+                <div class="toolbar">
+                    <div class="toolbar-left"></div>
+                    <button class="btn-action" onclick="toggleForm('form-zone')">+ Nouvelle zone</button>
+                </div>
+
+                <div class="form-panel" id="form-zone">
+                    <div class="form-title">Créer une zone</div>
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label>Nom de la zone</label>
+                            <input type="text" placeholder="Salle serveur">
+                        </div>
+                        <div class="form-field">
+                            <label>Étage</label>
+                            <select>
+                                <option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option>
+                                <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+                            </select>
+                        </div>
+                        <div class="form-field full">
+                            <label>Polygone (coordonnées x,y en mètres)</label>
+                            <input type="text" placeholder="0,0  20,0  20,15  0,15">
+                        </div>
+                        <div class="form-field">
+                            <label>Alerte entrée</label>
+                            <select><option selected>Oui</option><option>Non</option></select>
+                        </div>
+                        <div class="form-field">
+                            <label>Alerte sortie</label>
+                            <select><option selected>Oui</option><option>Non</option></select>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn-action">Créer la zone</button>
+                        <button class="btn-action danger" onclick="toggleForm('form-zone')">Annuler</button>
+                    </div>
+                </div>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Étage</th>
+                            <th>Type</th>
+                            <th>Entrée</th>
+                            <th>Sortie</th>
+                            <th>Personnes</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Accueil</td><td>3</td><td><span class="zone-tag normal">Normale</span></td><td style="color:var(--success)">Oui</td><td style="color:var(--success)">Oui</td><td>2</td><td><div class="table-actions"><button class="btn-table">Modifier</button><button class="btn-table delete">Supprimer</button></div></td></tr>
+                        <tr><td>Salle serveur</td><td>3</td><td><span class="zone-tag normal">Normale</span></td><td style="color:var(--success)">Oui</td><td style="color:var(--success)">Oui</td><td>2</td><td><div class="table-actions"><button class="btn-table">Modifier</button><button class="btn-table delete">Supprimer</button></div></td></tr>
+                        <tr><td>Zone restreinte</td><td>3</td><td><span class="zone-tag restricted">Restreinte</span></td><td style="color:var(--success)">Oui</td><td style="color:var(--text-dim)">Non</td><td>2</td><td><div class="table-actions"><button class="btn-table">Modifier</button><button class="btn-table delete">Supprimer</button></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ===== LOGS DE CONNEXION ===== -->
+            <div class="tab-content" id="tab-logs">
+                <div class="content-title">Logs de connexion</div>
+                <div class="content-desc">Historique de toutes les tentatives de connexion (succès et échecs).</div>
+
+                <div class="toolbar">
+                    <div class="toolbar-left">
+                        <div class="toolbar-search">
+                            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            <input type="text" placeholder="Filtrer par utilisateur...">
+                        </div>
+                    </div>
+                </div>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Horodatage</th>
+                            <th>Utilisateur</th>
+                            <th>Résultat</th>
+                            <th>Mode accédé</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td style="font-variant-numeric:tabular-nums; color:var(--text-secondary)">18/03/2026 14:32:18</td><td>admin</td><td><span class="log-result success">Succès</span></td><td>Admin</td></tr>
+                        <tr><td style="font-variant-numeric:tabular-nums; color:var(--text-secondary)">18/03/2026 14:30:02</td><td>admin</td><td><span class="log-result fail">Échec</span></td><td>—</td></tr>
+                        <tr><td style="font-variant-numeric:tabular-nums; color:var(--text-secondary)">18/03/2026 13:15:44</td><td>m.dupuis</td><td><span class="log-result success">Succès</span></td><td>Combat</td></tr>
+                        <tr><td style="font-variant-numeric:tabular-nums; color:var(--text-secondary)">18/03/2026 09:48:11</td><td>c.morel</td><td><span class="log-result success">Succès</span></td><td>Combat</td></tr>
+                        <tr><td style="font-variant-numeric:tabular-nums; color:var(--text-secondary)">18/03/2026 09:47:55</td><td>c.morel</td><td><span class="log-result fail">Échec</span></td><td>—</td></tr>
+                        <tr><td style="font-variant-numeric:tabular-nums; color:var(--text-secondary)">17/03/2026 18:22:30</td><td>t.bernard</td><td><span class="log-result success">Succès</span></td><td>Admin</td></tr>
+                        <tr><td style="font-variant-numeric:tabular-nums; color:var(--text-secondary)">17/03/2026 14:05:18</td><td>s.laurent</td><td><span class="log-result success">Succès</span></td><td>Combat</td></tr>
+                        <tr><td style="font-variant-numeric:tabular-nums; color:var(--text-secondary)">17/03/2026 08:12:03</td><td>inconnu</td><td><span class="log-result fail">Échec</span></td><td>—</td></tr>
+                        <tr><td style="font-variant-numeric:tabular-nums; color:var(--text-secondary)">16/03/2026 16:45:22</td><td>l.petit</td><td><span class="log-result success">Succès</span></td><td>Combat</td></tr>
+                        <tr><td style="font-variant-numeric:tabular-nums; color:var(--text-secondary)">16/03/2026 08:30:15</td><td>admin</td><td><span class="log-result success">Succès</span></td><td>Admin</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ===== CALIBRATION BLE ===== -->
+            <div class="tab-content" id="tab-calibration">
+                <div class="content-title">Calibration BLE</div>
+                <div class="content-desc">Paramètres de calibration du positionnement Bluetooth Low Energy. Modifiez ces valeurs après mesure sur site.</div>
+
+                <div class="cal-grid">
+                    <div class="cal-card">
+                        <div class="cal-label">RSSI à 1 mètre</div>
+                        <div class="cal-value" id="cal-rssi">-59</div>
+                        <div class="cal-unit">dBm — Mesuré à 1m du beacon</div>
+                        <div class="cal-slider">
+                            <input type="range" min="-80" max="-40" value="-59" oninput="document.getElementById('cal-rssi').textContent=this.value; document.getElementById('cal-rssi-val').textContent=this.value">
+                            <span class="cal-slider-val" id="cal-rssi-val">-59</span>
+                        </div>
+                    </div>
+                    <div class="cal-card">
+                        <div class="cal-label">Path loss exponent</div>
+                        <div class="cal-value" id="cal-ple">2.5</div>
+                        <div class="cal-unit">2.0 (libre) → 3.5 (murs denses)</div>
+                        <div class="cal-slider">
+                            <input type="range" min="15" max="40" value="25" oninput="let v=(this.value/10).toFixed(1); document.getElementById('cal-ple').textContent=v; document.getElementById('cal-ple-val').textContent=v">
+                            <span class="cal-slider-val" id="cal-ple-val">2.5</span>
+                        </div>
+                    </div>
+                    <div class="cal-card">
+                        <div class="cal-label">Buffer RSSI</div>
+                        <div class="cal-value" id="cal-buf">8</div>
+                        <div class="cal-unit">Mesures moyennées par gateway</div>
+                        <div class="cal-slider">
+                            <input type="range" min="3" max="20" value="8" oninput="document.getElementById('cal-buf').textContent=this.value; document.getElementById('cal-buf-val').textContent=this.value">
+                            <span class="cal-slider-val" id="cal-buf-val">8</span>
+                        </div>
+                    </div>
+                    <div class="cal-card">
+                        <div class="cal-label">Timeout tag</div>
+                        <div class="cal-value" id="cal-timeout">30</div>
+                        <div class="cal-unit">Secondes avant statut hors-ligne</div>
+                        <div class="cal-slider">
+                            <input type="range" min="5" max="120" value="30" step="5" oninput="document.getElementById('cal-timeout').textContent=this.value; document.getElementById('cal-timeout-val').textContent=this.value+'s'">
+                            <span class="cal-slider-val" id="cal-timeout-val">30s</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions" style="margin-bottom:24px;">
+                    <button class="btn-action">Sauvegarder la calibration</button>
+                </div>
+
+                <div class="content-title" style="font-size:13px; margin-top:12px;">Statut des gateways</div>
+                <div class="gw-status-grid">
+                    <div class="gw-card">
+                        <div class="gw-card-header">
+                            <div class="gw-card-title">Raspberry Pi 4</div>
+                            <span class="status-badge online"><span class="s-dot"></span> En ligne</span>
+                        </div>
+                        <div class="gw-card-row"><span>Adresse IP</span><span>192.168.1.10</span></div>
+                        <div class="gw-card-row"><span>Rôle</span><span>Serveur + Gateway</span></div>
+                        <div class="gw-card-row"><span>Position</span><span>x=20m, y=7.5m</span></div>
+                        <div class="gw-card-row"><span>Étage</span><span>3</span></div>
+                        <div class="gw-card-row"><span>Tags détectés</span><span>8</span></div>
+                    </div>
+                    <div class="gw-card">
+                        <div class="gw-card-header">
+                            <div class="gw-card-title">Raspberry Pi 500</div>
+                            <span class="status-badge online"><span class="s-dot"></span> En ligne</span>
+                        </div>
+                        <div class="gw-card-row"><span>Adresse IP</span><span>192.168.1.11</span></div>
+                        <div class="gw-card-row"><span>Rôle</span><span>Gateway</span></div>
+                        <div class="gw-card-row"><span>Position</span><span>x=80m, y=7.5m</span></div>
+                        <div class="gw-card-row"><span>Étage</span><span>3</span></div>
+                        <div class="gw-card-row"><span>Tags détectés</span><span>6</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== GATEWAYS ===== -->
+            <div class="tab-content" id="tab-gateways">
+                <div class="content-title">Gateways BLE</div>
+                <div class="content-desc">Statut en temps réel, calibration RSSI individuelle et gestion des points d'ancrage.</div>
+
+                <div class="section-header">
+                    <span></span>
+                    <button class="btn-action" onclick="showAddGwForm()">+ Ajouter une gateway</button>
+                </div>
+
+                <!-- Formulaire ajout -->
+                <div class="form-panel" id="form-add-gw" style="display:none;margin-bottom:16px">
+                    <div class="form-title">Nouvelle gateway</div>
+                    <div class="form-grid">
+                        <div class="form-field"><label>ID</label><input type="text" id="new-gw-id" placeholder="gw3"></div>
+                        <div class="form-field"><label>Nom</label><input type="text" id="new-gw-name" placeholder="Gateway Pi Zero"></div>
+                        <div class="form-field"><label>IP</label><input type="text" id="new-gw-ip" placeholder="192.168.10.x"></div>
+                        <div class="form-field"><label>RSSI à 1m (dBm)</label><input type="number" id="new-gw-rssi" value="-59" step="1"></div>
+                        <div class="form-field"><label>Path loss</label><input type="number" id="new-gw-pl" value="2.5" step="0.1"></div>
+                        <div class="form-field"><label>X réel (m)</label><input type="number" id="new-gw-x" value="0" step="0.1"></div>
+                        <div class="form-field"><label>Y réel (m)</label><input type="number" id="new-gw-y" value="0" step="0.1"></div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn-action" onclick="addGateway()">Ajouter</button>
+                        <button class="btn-action danger" onclick="document.getElementById('form-add-gw').style.display='none'">Annuler</button>
+                    </div>
+                </div>
+
+                <!-- Cartes gateways -->
+                <div id="gw-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;margin-top:8px"></div>
+            </div>
+
+            <!-- ===== PLAN DU BÂTIMENT ===== -->
+            <div class="tab-content" id="tab-plan">
+                <div class="content-title">Plan du bâtiment</div>
+                <div class="content-desc">Importez un plan de chaque étage, puis cliquez sur l'image pour placer les gateways. Les positions seront utilisées par le moteur de positionnement.</div>
+
+                <div class="toolbar">
+                    <div class="toolbar-left">
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim)">Étage</span>
+                            <select id="plan-floor-select" style="background:var(--bg-input);border:1px solid var(--border-dim);color:var(--text-primary);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 8px;cursor:pointer" onchange="loadPlan()">
+                                <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+                                <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn-action" id="btn-import-plan" onclick="document.getElementById('plan-file-input').click()">Importer un plan</button>
+                    <input type="file" id="plan-file-input" accept=".png,.jpg,.jpeg,.svg,.webp" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none" onchange="uploadPlan(this)">
+                </div>
+
+                <!-- Éditeur (affiché quand un plan existe) -->
+                <div id="plan-editor" style="display:none">
+
+                    <div style="display:flex;gap:16px;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap">
+                        <div class="form-field" style="margin:0">
+                            <label>Largeur réelle (m)</label>
+                            <input type="number" id="plan-width" value="30" min="1" max="500" style="width:100px">
+                        </div>
+                        <div class="form-field" style="margin:0">
+                            <label>Hauteur réelle (m)</label>
+                            <input type="number" id="plan-height" value="10" min="1" max="500" style="width:100px">
+                        </div>
+                        <div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;padding-bottom:2px">
+                            Dimensions réelles du couloir / de la salle représentée
+                        </div>
+                    </div>
+
+                    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+                        <button id="btn-place-gw1" class="btn-action" onclick="startPlace('gw1')"
+                            style="background:rgba(45,138,196,0.15);border-color:rgba(45,138,196,0.5);color:var(--accent-bright)">
+                            &#x25CE; Placer Pi4 (192.168.1.10)
+                        </button>
+                        <button id="btn-place-gw2" class="btn-action" onclick="startPlace('gw2')"
+                            style="background:rgba(40,160,104,0.15);border-color:rgba(40,160,104,0.5);color:var(--success)">
+                            &#x25CE; Placer Pi500 (192.168.1.11)
+                        </button>
+                        <span id="place-hint" style="font-size:10px;color:var(--amber);letter-spacing:1px;display:none">
+                            &#x25B6; Cliquez sur le plan pour positionner le gateway
+                        </span>
+                    </div>
+
+                    <!-- Conteneur image interactif -->
+                    <div id="plan-container" style="position:relative;display:inline-block;max-width:100%;border:1px solid var(--border-dim);cursor:default;user-select:none">
+                        <img id="plan-img" style="display:block;max-width:100%;max-height:500px" draggable="false">
+                        <!-- Marqueurs gateways injectés ici par JS -->
+                    </div>
+
+                    <div style="margin-top:4px;font-size:9px;color:var(--text-dim);letter-spacing:1px">
+                        Cliquez sur un marqueur placé pour le retirer.
+                    </div>
+
+                    <div class="form-actions" style="margin-top:16px">
+                        <button class="btn-action" onclick="savePlan()">Sauvegarder</button>
+                        <button class="btn-action danger" onclick="deletePlan()">Supprimer le plan</button>
+                    </div>
+                </div>
+
+                <!-- État vide -->
+                <div id="plan-empty" style="padding:40px 0;text-align:center;color:var(--text-dim);font-size:11px;letter-spacing:1px">
+                    Aucun plan importé pour l'étage sélectionné.<br>
+                    <span style="font-size:9px">Formats acceptés : PNG, JPG, SVG, WebP</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class="footer-left">
+            <div class="f-indicator"><div class="f-dot green"></div> Réseau eth0</div>
+            <div class="f-indicator"><div class="f-dot green"></div> MQTT actif</div>
+            <div class="f-indicator"><div class="f-dot green"></div> SQLite</div>
+        </div>
+        <div class="footer-right">
+            <span>Connecté : admin</span>
+            <span>Session : 28:42</span>
+            <span>v1.0.0</span>
+        </div>
+    </div>
+
+    <!-- ===== LOGS GATEWAYS ===== -->
+    <div class="tab-content" id="tab-gwlogs" style="display:none;flex-direction:column;height:100%;overflow:hidden">
+        <div class="content-header">
+            <div>
+                <div class="content-title">Logs Gateways</div>
+                <div class="content-desc">Toutes les remontées des Raspberry Pi en temps réel — RSSI, positions, alertes, statuts.</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+                <select id="gwlog-filter-gw" onchange="loadGwLogs()" style="background:var(--bg-input);border:1px solid var(--border-dim);color:var(--text-primary);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 8px">
+                    <option value="">Tous les gateways</option>
+                    <option value="gw1">Pi 4 (gw1)</option>
+                    <option value="gw2">Pi 500 (gw2)</option>
+                    <option value="server">Serveur</option>
+                </select>
+                <select id="gwlog-filter-type" onchange="loadGwLogs()" style="background:var(--bg-input);border:1px solid var(--border-dim);color:var(--text-primary);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 8px">
+                    <option value="">Tous les événements</option>
+                    <option value="rssi_batch">RSSI reçu</option>
+                    <option value="gw_online">Gateway online</option>
+                    <option value="gw_offline">Gateway offline</option>
+                    <option value="position">Position calculée</option>
+                    <option value="alert">Alerte zone</option>
+                    <option value="config_change">Config modifiée</option>
+                    <option value="server_start">Démarrage serveur</option>
+                </select>
+                <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-dim);cursor:pointer">
+                    <input type="checkbox" id="gwlog-autorefresh" checked onchange="toggleGwAutoRefresh()">
+                    Auto-refresh
+                </label>
+                <button class="btn-action" onclick="loadGwLogs()">Actualiser</button>
+                <button onclick="clearGwLogs()" style="background:none;border:1px solid var(--danger-border);color:var(--danger);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:5px 12px;cursor:pointer">Vider</button>
+            </div>
+        </div>
+
+        <!-- Stats rapides -->
+        <div id="gwlog-stats" style="display:flex;gap:24px;padding:8px 24px;border-bottom:1px solid var(--border-dim);font-size:10px;color:var(--text-dim);flex-shrink:0"></div>
+
+        <!-- Table des logs -->
+        <div style="flex:1;overflow-y:auto;padding:0 16px 16px">
+            <table style="width:100%;border-collapse:collapse;font-size:11px">
+                <thead>
+                    <tr style="position:sticky;top:0;background:var(--bg-panel);z-index:1">
+                        <th style="text-align:left;padding:8px 8px;color:var(--text-dim);font-weight:600;letter-spacing:1px;border-bottom:1px solid var(--border-dim);width:70px">#</th>
+                        <th style="text-align:left;padding:8px 8px;color:var(--text-dim);font-weight:600;letter-spacing:1px;border-bottom:1px solid var(--border-dim);width:75px">HEURE</th>
+                        <th style="text-align:left;padding:8px 8px;color:var(--text-dim);font-weight:600;letter-spacing:1px;border-bottom:1px solid var(--border-dim);width:90px">GATEWAY</th>
+                        <th style="text-align:left;padding:8px 8px;color:var(--text-dim);font-weight:600;letter-spacing:1px;border-bottom:1px solid var(--border-dim);width:130px">ÉVÉNEMENT</th>
+                        <th style="text-align:left;padding:8px 8px;color:var(--text-dim);font-weight:600;letter-spacing:1px;border-bottom:1px solid var(--border-dim)">DÉTAILS</th>
+                    </tr>
+                </thead>
+                <tbody id="gwlog-tbody"></tbody>
+            </table>
+            <div id="gwlog-empty" style="display:none;text-align:center;padding:40px;color:var(--text-dim)">Aucun événement — en attente de données des gateways...</div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// ─── AUTH ────────────────────────────────────────────────────────────────────
+const API = window.location.origin;
+
+function getToken() { return localStorage.getItem('bt_token'); }
+function getRole()  { return localStorage.getItem('bt_role'); }
+function getUser()  { return localStorage.getItem('bt_user'); }
+
+function logout() {
+    localStorage.removeItem('bt_token');
+    localStorage.removeItem('bt_role');
+    localStorage.removeItem('bt_user');
+    window.location.href = '/';
+}
+
+// Vérification : admin uniquement
+if (!getToken()) { window.location.replace('/'); }
+if (getRole() !== 'admin') { window.location.replace('/combat'); }
+
+// Timeout 30 min d'inactivité
+let _activityTimer;
+let _sessionStart = Date.now();
+
+function resetActivityTimer() {
+    clearTimeout(_activityTimer);
+    _activityTimer = setTimeout(() => {
+        logout();
+        window.location.href = '/?session=expired';
+    }, 30 * 60 * 1000);
+}
+['click', 'keydown', 'mousemove', 'touchstart'].forEach(e =>
+    document.addEventListener(e, resetActivityTimer, { passive: true })
+);
+resetActivityTimer();
+
+// Wiring bouton déconnexion et combat
+document.querySelector('.btn-header:not(.combat)').addEventListener('click', logout);
+
+// ─── HORLOGE + SESSION ───────────────────────────────────────────────────────
+function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent =
+        [now.getHours(), now.getMinutes(), now.getSeconds()]
+        .map(n => String(n).padStart(2, '0')).join(':');
+
+    // Durée de session
+    const elapsed = Math.floor((Date.now() - _sessionStart) / 1000);
+    const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
+    const ss = String(elapsed % 60).padStart(2, '0');
+    const spans = document.querySelectorAll('.footer-right span');
+    if (spans[0]) spans[0].textContent = 'Connecté : ' + (getUser() || 'admin');
+    if (spans[1]) spans[1].textContent = `Session : ${mm}:${ss}`;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ─── NAVIGATION ONGLETS ──────────────────────────────────────────────────────
+function switchTab(tabId, navEl) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('tab-' + tabId).classList.add('active');
+    navEl.classList.add('active');
+    loadTab(tabId);
+}
+
+function toggleForm(formId) {
+    document.getElementById(formId).classList.toggle('visible');
+}
+
+// ─── HELPERS API ─────────────────────────────────────────────────────────────
+const H = () => ({ 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' });
+const Hg = () => ({ 'Authorization': 'Bearer ' + getToken() });
+
+async function apiFetch(method, path, body) {
+    const opts = { method, headers: H() };
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch(API + path, opts);
+    if (r.status === 401) { logout(); return null; }
+    return r;
+}
+
+function fmtDate(ts) {
+    if (!ts) return '—';
+    return new Date(ts * 1000).toLocaleString('fr-FR', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+    });
+}
+
+function showToast(msg, ok = true) {
+    const t = document.createElement('div');
+    t.style.cssText = `position:fixed;bottom:48px;right:20px;z-index:999;padding:10px 18px;
+        background:${ok ? 'var(--success-dim)' : 'var(--danger-dim)'};
+        border:1px solid ${ok ? 'rgba(40,160,104,0.4)' : 'rgba(196,64,48,0.4)'};
+        color:${ok ? 'var(--success)' : 'var(--danger)'};
+        font-size:11px;letter-spacing:1px;animation:fadeIn .2s ease`;
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+}
+
+// ─── CHARGEMENT DES ONGLETS ──────────────────────────────────────────────────
+const _loaded = new Set();
+
+async function loadTab(tabId) {
+    if (_loaded.has(tabId)) return;
+    _loaded.add(tabId);
+
+    if (tabId === 'users')       await loadUsers();
+    if (tabId === 'personnel')   await loadPersonnel();
+    if (tabId === 'zones')       await loadZones();
+    if (tabId === 'logs')        await loadLogs();
+    if (tabId === 'calibration') await loadCalibration();
+    if (tabId === 'gateways')    await loadGateways();
+    if (tabId === 'plan')        await loadPlan();
+    if (tabId === 'gwlogs')     { await loadGwLogs(); startGwAutoRefresh(); }
+    else                        stopGwAutoRefresh();
+}
+
+// ─── ONGLET UTILISATEURS ─────────────────────────────────────────────────────
+async function loadUsers() {
+    const r = await apiFetch('GET', '/api/users');
+    if (!r || !r.ok) return;
+    const users = await r.json();
+
+    const tbody = document.querySelector('#tab-users table tbody');
+    tbody.innerHTML = users.map(u => `
+        <tr data-username="${u.username}">
+            <td>${u.username}</td>
+            <td>${u.full_name || '—'}</td>
+            <td><span class="role-badge ${u.role}">${u.role === 'admin' ? 'Admin' : 'Opérateur'}</span></td>
+            <td style="font-variant-numeric:tabular-nums;color:var(--text-secondary)">${fmtDate(u.last_login)}</td>
+            <td><div class="table-actions">
+                ${u.username !== 'admin' ? `<button class="btn-table delete" onclick="deleteUser('${u.username}')">Supprimer</button>` : ''}
+            </div></td>
+        </tr>`).join('');
+
+    document.querySelector('.nav-item[data-tab="users"] .nav-badge').textContent = users.length;
+}
+
+async function deleteUser(username) {
+    if (!confirm(`Supprimer l'utilisateur « ${username} » ?`)) return;
+    const r = await apiFetch('DELETE', '/api/users/' + username);
+    if (r && r.ok) {
+        showToast('Utilisateur supprimé');
+        _loaded.delete('users');
+        loadUsers();
+    } else {
+        showToast('Erreur lors de la suppression', false);
+    }
+}
+
+// Wiring formulaire création utilisateur
+document.querySelector('#form-user .btn-action:not(.danger)').addEventListener('click', async () => {
+    const inputs = document.querySelectorAll('#form-user .form-field input');
+    const sel    = document.querySelector('#form-user .form-field select');
+    const [username, password, full_name] = [...inputs].map(i => i.value.trim());
+    const role = sel.value;
+
+    if (!username || !password || !full_name) { showToast('Tous les champs sont requis', false); return; }
+
+    const r = await apiFetch('POST', '/api/users', { username, password, full_name, role });
+    if (r && r.ok) {
+        showToast('Utilisateur créé');
+        inputs.forEach(i => i.value = '');
+        toggleForm('form-user');
+        _loaded.delete('users');
+        loadUsers();
+    } else {
+        const data = r ? await r.json() : {};
+        showToast(data.detail || 'Erreur', false);
+    }
+});
+
+// ─── ONGLET PERSONNEL ────────────────────────────────────────────────────────
+async function loadPersonnel() {
+    const [pRes, posRes] = await Promise.all([
+        apiFetch('GET', '/api/personnel'),
+        apiFetch('GET', '/api/positions'),
+    ]);
+    if (!pRes || !pRes.ok) return;
+
+    const personnel = await pRes.json();
+    const positions = posRes && posRes.ok ? await posRes.json() : [];
+    const posMap = Object.fromEntries(positions.map(p => [p.tag_mac, p]));
+
+    const tbody = document.querySelector('#tab-personnel table tbody');
+    tbody.innerHTML = personnel.map(p => {
+        const pos = posMap[p.tag_mac];
+        const online = pos && pos.online;
+        return `
+        <tr>
+            <td>${p.name}</td>
+            <td class="mac-cell">${p.tag_mac}</td>
+            <td>${p.role || '—'}</td>
+            <td>${p.badge_id || '—'}</td>
+            <td><span class="status-badge ${online ? 'online' : 'offline'}">
+                <span class="s-dot"></span> ${online ? 'En ligne' : 'Hors ligne'}
+            </span></td>
+            <td><div class="table-actions">
+                <button class="btn-table delete" onclick="deletePersonnel('${p.tag_mac}')">Supprimer</button>
+            </div></td>
+        </tr>`;
+    }).join('');
+
+    document.querySelector('.nav-item[data-tab="personnel"] .nav-badge').textContent = personnel.length;
+}
+
+async function deletePersonnel(mac) {
+    if (!confirm(`Supprimer le beacon ${mac} ?`)) return;
+    const r = await apiFetch('DELETE', '/api/personnel/' + encodeURIComponent(mac));
+    if (r && r.ok) {
+        showToast('Personnel supprimé');
+        _loaded.delete('personnel');
+        loadPersonnel();
+    } else {
+        showToast('Erreur', false);
+    }
+}
+
+// ─── SCAN BLE ─────────────────────────────────────────────────────────────────
+async function bleScan() {
+    const btn = document.getElementById('btn-ble-scan');
+    const box = document.getElementById('ble-results');
+    btn.disabled = true;
+    btn.textContent = 'Scan...';
+    box.style.display = 'none';
+    try {
+        const r = await apiFetch('GET', '/api/ble/scan?duration=6');
+        if (!r || !r.ok) { showToast('Erreur scan BLE', false); return; }
+        const data = await r.json();
+        if (!data.devices.length) {
+            box.innerHTML = '<div style="padding:10px;color:var(--text-dim)">Aucun appareil détecté</div>';
+        } else {
+            box.innerHTML = data.devices.map(d => `
+                <div onclick="selectBleMac('${d.mac}')"
+                     style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border-dim);display:flex;justify-content:space-between;align-items:center"
+                     onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
+                    <span>
+                        <span style="font-family:monospace;color:var(--accent)">${d.mac}</span>
+                        ${d.name ? `<span style="color:var(--text-dim);margin-left:8px">${d.name}</span>` : ''}
+                    </span>
+                    <span style="color:${d.rssi > -60 ? 'var(--success)' : d.rssi > -75 ? 'var(--warning)' : 'var(--danger)'};font-size:12px">${d.rssi} dBm</span>
+                </div>`).join('');
+        }
+        box.style.display = 'block';
+        document.addEventListener('click', function hide(e) {
+            if (!box.contains(e.target) && e.target.id !== 'btn-ble-scan') {
+                box.style.display = 'none';
+                document.removeEventListener('click', hide);
+            }
+        });
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '📶 Scanner';
+    }
+}
+
+function selectBleMac(mac) {
+    document.getElementById('input-mac').value = mac;
+    document.getElementById('ble-results').style.display = 'none';
+}
+
+document.getElementById('btn-save-personnel').addEventListener('click', async () => {
+    const inputs = document.querySelectorAll('#form-personnel .form-field input');
+    const tag_mac = document.getElementById('input-mac').value.trim();
+    const [, name, role, badge_id] = [...inputs].map(i => i.value.trim());
+
+    if (!tag_mac || !name) { showToast('MAC et nom sont requis', false); return; }
+
+    const r = await apiFetch('POST', '/api/personnel', { tag_mac, name, role, badge_id });
+    if (r && r.ok) {
+        showToast('Personnel enregistré');
+        inputs.forEach(i => i.value = '');
+        toggleForm('form-personnel');
+        _loaded.delete('personnel');
+        loadPersonnel();
+    } else {
+        const data = r ? await r.json() : {};
+        showToast(data.detail || 'Erreur', false);
+    }
+});
+
+// ─── ONGLET ZONES ────────────────────────────────────────────────────────────
+async function loadZones() {
+    const r = await apiFetch('GET', '/api/zones');
+    if (!r || !r.ok) return;
+    const zones = await r.json();
+
+    const tbody = document.querySelector('#tab-zones table tbody');
+    tbody.innerHTML = zones.map(z => {
+        const restricted = z.alert_on_enter || z.alert_on_exit;
+        return `
+        <tr>
+            <td>${z.name}</td>
+            <td>${z.floor}</td>
+            <td><span class="zone-tag ${restricted ? 'restricted' : 'normal'}">${restricted ? 'Restreinte' : 'Normale'}</span></td>
+            <td style="color:${z.alert_on_enter ? 'var(--success)' : 'var(--text-dim)'}">${z.alert_on_enter ? 'Oui' : 'Non'}</td>
+            <td style="color:${z.alert_on_exit  ? 'var(--success)' : 'var(--text-dim)'}">${z.alert_on_exit  ? 'Oui' : 'Non'}</td>
+            <td>—</td>
+            <td><div class="table-actions">
+                <button class="btn-table delete" onclick="deleteZone('${z.id}')">Supprimer</button>
+            </div></td>
+        </tr>`;
+    }).join('');
+
+    document.querySelector('.nav-item[data-tab="zones"] .nav-badge').textContent = zones.length;
+}
+
+async function deleteZone(id) {
+    if (!confirm('Supprimer cette zone ?')) return;
+    const r = await apiFetch('DELETE', '/api/zones/' + id);
+    if (r && r.ok) {
+        showToast('Zone supprimée');
+        _loaded.delete('zones');
+        loadZones();
+    } else {
+        showToast('Erreur', false);
+    }
+}
+
+document.querySelector('#form-zone .btn-action:not(.danger)').addEventListener('click', async () => {
+    const inputs  = document.querySelectorAll('#form-zone .form-field input');
+    const selects = document.querySelectorAll('#form-zone .form-field select');
+    const name    = inputs[0].value.trim();
+    const floor   = parseInt(selects[0].value);
+    const polyStr = inputs[1].value.trim();
+    const alert_on_enter = selects[1].value === 'Oui';
+    const alert_on_exit  = selects[2].value === 'Oui';
+
+    if (!name || !polyStr) { showToast('Nom et polygone requis', false); return; }
+
+    // Parser le polygone : "0,0  20,0  20,15  0,15"
+    let polygon;
+    try {
+        polygon = polyStr.split(/\s+/).map(pair => {
+            const [x, y] = pair.split(',').map(Number);
+            return [x, y];
+        }).filter(p => !isNaN(p[0]) && !isNaN(p[1]));
+        if (polygon.length < 3) throw new Error();
+    } catch {
+        showToast('Format polygone invalide — ex: 0,0  20,0  20,15  0,15', false);
+        return;
+    }
+
+    const r = await apiFetch('POST', '/api/zones', { name, floor, polygon, alert_on_enter, alert_on_exit });
+    if (r && r.ok) {
+        showToast('Zone créée');
+        inputs.forEach(i => i.value = '');
+        toggleForm('form-zone');
+        _loaded.delete('zones');
+        loadZones();
+    } else {
+        showToast('Erreur', false);
+    }
+});
+
+// ─── ONGLET LOGS ─────────────────────────────────────────────────────────────
+async function loadLogs(filter = '') {
+    const url = '/api/logs' + (filter ? `?username=${encodeURIComponent(filter)}` : '');
+    const r = await apiFetch('GET', url);
+    if (!r || !r.ok) return;
+    const logs = await r.json();
+
+    const tbody = document.querySelector('#tab-logs table tbody');
+    tbody.innerHTML = logs.map(l => `
+        <tr>
+            <td style="font-variant-numeric:tabular-nums;color:var(--text-secondary)">${fmtDate(l.timestamp)}</td>
+            <td>${l.username}</td>
+            <td><span class="log-result ${l.success ? 'success' : 'fail'}">${l.success ? 'Succès' : 'Échec'}</span></td>
+            <td>${l.mode || '—'}</td>
+        </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-dim)">Aucun log</td></tr>';
+
+    document.querySelector('.nav-item[data-tab="logs"] .nav-badge').textContent = logs.length;
+}
+
+// Filtre logs en temps réel
+document.querySelector('#tab-logs .toolbar-search input').addEventListener('input', e => {
+    _loaded.delete('logs');
+    loadLogs(e.target.value.trim());
+    _loaded.add('logs');
+});
+
+// ─── ONGLET CALIBRATION ──────────────────────────────────────────────────────
+async function loadCalibration() {
+    const r = await apiFetch('GET', '/api/config');
+    if (!r || !r.ok) return;
+    const cfg = await r.json();
+
+    if (cfg.rssi_1m) {
+        document.querySelector('#tab-calibration input[min="-80"]').value = cfg.rssi_1m;
+        document.getElementById('cal-rssi').textContent     = cfg.rssi_1m;
+        document.getElementById('cal-rssi-val').textContent = cfg.rssi_1m;
+    }
+    if (cfg.path_loss) {
+        const v = parseFloat(cfg.path_loss);
+        document.querySelector('#tab-calibration input[min="15"]').value = Math.round(v * 10);
+        document.getElementById('cal-ple').textContent     = v.toFixed(1);
+        document.getElementById('cal-ple-val').textContent = v.toFixed(1);
+    }
+    if (cfg.buffer_size) {
+        document.querySelector('#tab-calibration input[min="3"]').value = cfg.buffer_size;
+        document.getElementById('cal-buf').textContent     = cfg.buffer_size;
+        document.getElementById('cal-buf-val').textContent = cfg.buffer_size;
+    }
+    if (cfg.tag_timeout) {
+        document.querySelector('#tab-calibration input[min="5"]').value = cfg.tag_timeout;
+        document.getElementById('cal-timeout').textContent     = cfg.tag_timeout;
+        document.getElementById('cal-timeout-val').textContent = cfg.tag_timeout + 's';
+    }
+}
+
+document.querySelector('#tab-calibration .btn-action').addEventListener('click', async () => {
+    const rssi_1m    = parseFloat(document.querySelector('#tab-calibration input[min="-80"]').value);
+    const path_loss  = parseFloat(document.querySelector('#tab-calibration input[min="15"]').value) / 10;
+    const buffer_size = parseInt(document.querySelector('#tab-calibration input[min="3"]').value);
+    const tag_timeout = parseInt(document.querySelector('#tab-calibration input[min="5"]').value);
+
+    const r = await apiFetch('PUT', '/api/config', { rssi_1m, path_loss, buffer_size, tag_timeout });
+    if (r && r.ok) {
+        showToast('Calibration sauvegardée');
+    } else {
+        showToast('Erreur lors de la sauvegarde', false);
+    }
+});
+
+// ─── ONGLET LOGS GATEWAYS ────────────────────────────────────────────────────
+let _gwRefreshTimer = null;
+
+const EVENT_LABELS = {
+    rssi_batch:       'RSSI reçu',
+    gw_online:        'Gateway online',
+    gw_offline:       'Gateway offline',
+    position:         'Position',
+    alert:            'Alerte zone',
+    mqtt_connect:     'MQTT connecté',
+    mqtt_disconnect:  'MQTT déconnecté',
+    server_start:     'Démarrage',
+    config_change:    'Config modifiée',
+};
+
+const EVENT_CSS = {
+    rssi_batch:      'color:var(--accent-bright)',
+    gw_online:       'color:var(--success)',
+    gw_offline:      'color:var(--danger)',
+    position:        'color:var(--text-dim)',
+    alert:           'color:var(--warning,#f59e0b)',
+    mqtt_connect:    'color:var(--success)',
+    mqtt_disconnect: 'color:var(--danger)',
+    server_start:    'color:var(--accent)',
+    config_change:   'color:var(--warning,#f59e0b)',
+};
+
+async function loadGwLogs() {
+    const gw   = document.getElementById('gwlog-filter-gw').value;
+    const type = document.getElementById('gwlog-filter-type').value;
+    const params = new URLSearchParams({ limit: 300 });
+    if (gw)   params.set('gateway_id', gw);
+    if (type) params.set('event_type', type);
+
+    const r = await apiFetch('GET', `/api/logs/gateway?${params}`);
+    if (!r || !r.ok) return;
+    const { events, stats } = await r.json();
+
+    // Stats
+    const statsEl = document.getElementById('gwlog-stats');
+    statsEl.innerHTML = `
+        <span>Total en mémoire : <strong>${stats.total_in_memory}</strong></span>
+        <span>5 dernières min : <strong>${stats.last_5min}</strong></span>
+        ${Object.entries(stats.by_gateway).map(([id, n]) =>
+            `<span>${id} : <strong>${n}</strong> evt</span>`
+        ).join('')}
+    `;
+
+    // Badge nav
+    const badge = document.getElementById('gwlog-badge');
+    if (stats.last_5min > 0) {
+        badge.textContent = stats.last_5min;
+        badge.style.display = 'inline-block';
+    }
+
+    // Table
+    const tbody  = document.getElementById('gwlog-tbody');
+    const empty  = document.getElementById('gwlog-empty');
+
+    if (!events.length) {
+        tbody.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+    }
+    empty.style.display = 'none';
+
+    tbody.innerHTML = events.map(e => {
+        const css   = EVENT_CSS[e.event_type] || 'color:var(--text-dim)';
+        const label = EVENT_LABELS[e.event_type] || e.event_type;
+        const gwLabel = e.gateway_id === 'server' ? '— serveur —' :
+                        e.gateway_id === 'gw1'    ? 'Pi 4 (gw1)' :
+                        e.gateway_id === 'gw2'    ? 'Pi 500 (gw2)' :
+                        e.gateway_id || '—';
+
+        // Détails supplémentaires selon type
+        let extra = '';
+        if (e.event_type === 'rssi_batch' && e.data.tags?.length) {
+            extra = `<span style="color:var(--text-dim);margin-left:8px">[${e.data.tags.join(', ')}]</span>`;
+        }
+
+        return `<tr style="border-bottom:1px solid rgba(255,255,255,0.03)">
+            <td style="padding:5px 8px;color:var(--text-dim);font-size:10px">#${e.seq}</td>
+            <td style="padding:5px 8px;color:var(--text-dim);white-space:nowrap">${e.time_str}</td>
+            <td style="padding:5px 8px;color:var(--accent-bright)">${gwLabel}</td>
+            <td style="padding:5px 8px;${css};white-space:nowrap">${label}</td>
+            <td style="padding:5px 8px;color:var(--text-primary)">${e.message}${extra}</td>
+        </tr>`;
+    }).join('');
+}
+
+function startGwAutoRefresh() {
+    stopGwAutoRefresh();
+    if (document.getElementById('gwlog-autorefresh')?.checked) {
+        _gwRefreshTimer = setInterval(loadGwLogs, 2000);
+    }
+}
+
+function stopGwAutoRefresh() {
+    if (_gwRefreshTimer) { clearInterval(_gwRefreshTimer); _gwRefreshTimer = null; }
+}
+
+function toggleGwAutoRefresh() {
+    if (document.getElementById('gwlog-autorefresh').checked) startGwAutoRefresh();
+    else stopGwAutoRefresh();
+}
+
+function clearGwLogs() {
+    document.getElementById('gwlog-tbody').innerHTML = '';
+    document.getElementById('gwlog-stats').innerHTML = '';
+    document.getElementById('gwlog-empty').style.display = 'block';
+}
+
+// ─── ONGLET PLAN ─────────────────────────────────────────────────────────────
+
+// Positions normalisées [0-1] des gateways placés sur le plan
+// { gw1: {px, py} | null, gw2: {px, py} | null }
+let _planGateways = { gw1: null, gw2: null };
+let _placingGw = null; // id du gateway en cours de placement
+
+const GW_DEFS = {
+    gw1: { name: 'Pi4',   ip: '192.168.1.10', color: 'var(--accent-bright)',  label: 'Pi4'   },
+    gw2: { name: 'Pi500', ip: '192.168.1.11', color: 'var(--success)',         label: 'Pi500' },
+};
+
+// ─── ONGLET GATEWAYS ──────────────────────────────────────────────────────────
+let _gwGatewayTimer = null;
+
+function _gwCardHtml(gw) {
+    const agoTxt = gw.ago != null
+        ? (gw.ago < 60 ? `il y a ${gw.ago}s` : `il y a ${Math.round(gw.ago/60)}min`)
+        : 'jamais';
+    const statusColor = gw.online ? 'var(--success)' : 'var(--danger)';
+    const statusLabel = gw.online ? 'EN LIGNE' : 'HORS LIGNE';
+    return `
+    <div data-gw-card="${gw.id}" style="background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;padding:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+            <div>
+                <div style="font-size:13px;font-weight:600;color:var(--text-primary)">${gw.name}</div>
+                <div style="font-size:11px;color:var(--text-dim);margin-top:2px">${gw.id} — ${gw.ip || 'IP non définie'}</div>
+            </div>
+            <div style="text-align:right">
+                <div data-gw-status="${gw.id}" style="font-size:11px;font-weight:700;color:${statusColor};letter-spacing:1px">${statusLabel}</div>
+                <div data-gw-ago="${gw.id}" style="font-size:10px;color:var(--text-dim);margin-top:2px">${agoTxt}</div>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+            <div style="background:var(--bg-input);border-radius:4px;padding:8px;text-align:center">
+                <div data-gw-tags="${gw.id}" style="font-size:18px;font-weight:700;color:var(--accent)">${gw.tags_seen}</div>
+                <div style="font-size:10px;color:var(--text-dim)">Tags détectés</div>
+            </div>
+            <div style="background:var(--bg-input);border-radius:4px;padding:8px;text-align:center">
+                <div style="font-size:18px;font-weight:700;color:var(--text-secondary)">${gw.rssi_1m}</div>
+                <div style="font-size:10px;color:var(--text-dim)">RSSI 1m (dBm)</div>
+            </div>
+            <div style="background:var(--bg-input);border-radius:4px;padding:8px;text-align:center">
+                <div style="font-size:18px;font-weight:700;color:var(--text-secondary)">${gw.path_loss}</div>
+                <div style="font-size:10px;color:var(--text-dim)">Path loss</div>
+            </div>
+        </div>
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px">
+            Position : x=${gw.x}m y=${gw.y}m — Étage ${gw.floor}
+        </div>
+        <div style="margin-bottom:10px">
+            <div style="font-size:10px;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Tags visibles</div>
+            <div data-gw-live="${gw.id}" style="font-size:11px;min-height:20px">
+                <span style="color:var(--text-dim)">—</span>
+            </div>
+        </div>
+        <details style="margin-bottom:10px" ontoggle="if(this.open) loadGwCalMacs('${gw.id}')">
+            <summary style="font-size:11px;color:var(--accent);cursor:pointer;user-select:none">&#9881; Calibration &amp; config</summary>
+            <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <div class="form-field"><label>Nom</label><input type="text" id="gw-name-${gw.id}" value="${gw.name}"></div>
+                <div class="form-field"><label>IP</label><input type="text" id="gw-ip-${gw.id}" value="${gw.ip}"></div>
+                <div class="form-field"><label>RSSI à 1m (dBm)</label><input type="number" id="gw-rssi-${gw.id}" value="${gw.rssi_1m}" step="1"></div>
+                <div class="form-field"><label>Path loss</label><input type="number" id="gw-pl-${gw.id}" value="${gw.path_loss}" step="0.1"></div>
+                <div class="form-field"><label>X réel (m)</label><input type="number" id="gw-x-${gw.id}" value="${gw.x}" step="0.1"></div>
+                <div class="form-field"><label>Y réel (m)</label><input type="number" id="gw-y-${gw.id}" value="${gw.y}" step="0.1"></div>
+            </div>
+            <div style="border-top:1px solid var(--border);margin-top:12px;padding-top:12px">
+                <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px">&#128207; Mesure automatique RSSI à 1m — place le beacon à exactement 1m de la gateway</div>
+                <div style="display:grid;grid-template-columns:1fr 70px auto;gap:8px;align-items:end">
+                    <div class="form-field" style="margin:0">
+                        <label>Beacon à calibrer</label>
+                        <select id="gw-cal-mac-${gw.id}">
+                            <option value="">Chargement...</option>
+                        </select>
+                    </div>
+                    <div class="form-field" style="margin:0"><label>Durée (s)</label><input type="number" id="gw-cal-dur-${gw.id}" value="5" min="3" max="30"></div>
+                    <button class="btn-action" id="gw-cal-btn-${gw.id}" onclick="measureRssi('${gw.id}')">Mesurer</button>
+                </div>
+                <div id="gw-cal-result-${gw.id}" style="margin-top:8px;font-size:11px;display:none;padding:8px;background:var(--bg-input);border-radius:4px"></div>
+                <div style="margin-top:8px;font-size:11px;color:var(--text-dim)">
+                    Après avoir changé rssi_1m ou path_loss, vide le buffer pour que les nouvelles valeurs s'appliquent immédiatement :
+                    <button class="btn-action" style="margin-left:8px;padding:3px 10px;font-size:11px" onclick="clearRssiBuffer('')">Vider tous les buffers</button>
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px">
+                <button class="btn-action" onclick="saveGateway('${gw.id}')">Enregistrer</button>
+                <button class="btn-action danger" onclick="deleteGateway('${gw.id}')">Supprimer</button>
+            </div>
+        </details>
+    </div>`;
+}
+
+async function loadGateways() {
+    const r = await apiFetch('GET', '/api/gateways');
+    if (!r || !r.ok) return;
+    const gws = await r.json();
+
+    document.getElementById('gw-badge').textContent = gws.length;
+
+    const container = document.getElementById('gw-cards');
+    const existingIds = new Set([...container.querySelectorAll('[data-gw-card]')].map(el => el.dataset.gwCard));
+    const newIds = new Set(gws.map(gw => gw.id));
+
+    // Supprimer les cartes qui n'existent plus
+    existingIds.forEach(id => { if (!newIds.has(id)) container.querySelector(`[data-gw-card="${id}"]`)?.remove(); });
+
+    gws.forEach(gw => {
+        const agoTxt = gw.ago != null
+            ? (gw.ago < 60 ? `il y a ${gw.ago}s` : `il y a ${Math.round(gw.ago/60)}min`)
+            : 'jamais';
+
+        if (existingIds.has(gw.id)) {
+            // Carte existante — met à jour uniquement les données dynamiques (pas de rebuild)
+            const statusEl = container.querySelector(`[data-gw-status="${gw.id}"]`);
+            const agoEl    = container.querySelector(`[data-gw-ago="${gw.id}"]`);
+            const tagsEl   = container.querySelector(`[data-gw-tags="${gw.id}"]`);
+            if (statusEl) { statusEl.textContent = gw.online ? 'EN LIGNE' : 'HORS LIGNE'; statusEl.style.color = gw.online ? 'var(--success)' : 'var(--danger)'; }
+            if (agoEl)    agoEl.textContent = agoTxt;
+            if (tagsEl)   tagsEl.textContent = gw.tags_seen;
+        } else {
+            // Nouvelle carte — insertion
+            container.insertAdjacentHTML('beforeend', _gwCardHtml(gw));
+        }
+    });
+
+    // RSSI live pour chaque gateway
+    for (const gw of gws) {
+        const lr = await apiFetch('GET', `/api/gateways/${gw.id}/rssi_live`);
+        if (lr && lr.ok) _updateGwLive(gw.id, await lr.json());
+    }
+
+    // Auto-refresh toutes les 5s
+    clearTimeout(_gwGatewayTimer);
+    if (document.getElementById('tab-gateways').classList.contains('active')) {
+        _gwGatewayTimer = setTimeout(loadGateways, 5000);
+    }
+}
+
+function _updateGwLive(gwId, readings) {
+    const el = document.querySelector(`[data-gw-live="${gwId}"]`);
+    if (!el) return;
+    if (!readings || readings.length === 0) {
+        el.innerHTML = '<span style="color:var(--text-dim)">Aucun tag détecté</span>';
+        return;
+    }
+    el.innerHTML = readings.map(r => {
+        const color = r.rssi_last > -70 ? 'var(--success)' : r.rssi_last > -85 ? 'var(--warning)' : 'var(--danger)';
+        const shortMac = r.tag_mac.slice(-8);
+        const distColor = r.distance_m < 3 ? 'var(--success)' : r.distance_m < 8 ? 'var(--warning)' : 'var(--danger)';
+        return `<span style="display:inline-flex;align-items:center;gap:4px;margin:2px 4px 2px 0;padding:3px 7px;background:var(--bg-input);border-radius:4px;font-size:11px">
+            <span style="color:var(--text-dim)">${shortMac}</span>
+            <strong style="color:${color}">${r.rssi_avg} dBm</strong>
+            <span style="color:${distColor}">≈${r.distance_m}m</span>
+            <span title="Utiliser pour calibration" style="cursor:pointer;color:var(--accent);font-size:13px;line-height:1" onclick="_selectCalMac('${gwId}','${r.tag_mac}')">&#8599;</span>
+        </span>`;
+    }).join('');
+}
+
+function _selectCalMac(gwId, mac) {
+    // Ouvre le details si fermé
+    const details = document.querySelector(`[data-gw-card="${gwId}"] details`);
+    if (details && !details.open) { details.open = true; return; } // ontoggle chargera les MACs, relancer ensuite
+    const sel = document.getElementById(`gw-cal-mac-${gwId}`);
+    if (!sel) return;
+    // Si l'option existe dans le select, la sélectionner
+    const opt = [...sel.options].find(o => o.value === mac);
+    if (opt) { sel.value = mac; return; }
+    // Sinon, basculer sur saisie manuelle
+    sel.value = '__custom__';
+    sel.dispatchEvent(new Event('change'));
+    const inp = document.getElementById(`gw-cal-custom-input-${gwId}`);
+    if (inp) inp.value = mac;
+}
+
+async function loadGwCalMacs(gwId) {
+    const sel = document.getElementById(`gw-cal-mac-${gwId}`);
+    if (!sel || sel.dataset.loaded) return;
+    const r = await apiFetch('GET', '/api/personnel');
+    const list = (r && r.ok) ? await r.json() : [];
+    const withMac = list.filter(p => p.tag_mac);
+    sel.innerHTML = '<option value="">— Choisir un personnel —</option>' +
+        withMac.map(p => `<option value="${p.tag_mac}">${p.name} (${p.tag_mac})</option>`).join('') +
+        '<option value="__custom__">Autre MAC (saisie manuelle)...</option>';
+    sel.dataset.loaded = '1';
+    sel.addEventListener('change', () => {
+        const customRow = document.getElementById(`gw-cal-custom-${gwId}`);
+        if (sel.value === '__custom__') customRow.style.display = '';
+        else customRow.style.display = 'none';
+    });
+    // Ligne de saisie manuelle (cachée par défaut)
+    let customRow = document.getElementById(`gw-cal-custom-${gwId}`);
+    if (!customRow) {
+        sel.closest('.form-field').insertAdjacentHTML('afterend',
+            `<div id="gw-cal-custom-${gwId}" class="form-field" style="display:none;margin:0">
+                <label>MAC manuelle</label>
+                <input type="text" id="gw-cal-custom-input-${gwId}" placeholder="AA:BB:CC:DD:EE:FF" style="text-transform:uppercase">
+            </div>`
+        );
+    }
+}
+
+async function clearRssiBuffer(mac) {
+    const url = mac ? `/api/rssi_buffer?tag_mac=${encodeURIComponent(mac)}` : '/api/rssi_buffer';
+    const r = await apiFetch('DELETE', url);
+    if (r && r.ok) showToast('Buffer RSSI vidé — les positions vont se recalculer');
+    else showToast('Erreur', false);
+}
+
+async function measureRssi(gwId) {
+    const sel = document.getElementById(`gw-cal-mac-${gwId}`);
+    let mac = sel.value;
+    if (mac === '__custom__') mac = (document.getElementById(`gw-cal-custom-input-${gwId}`)?.value || '').trim().toUpperCase();
+    const dur = parseInt(document.getElementById(`gw-cal-dur-${gwId}`).value) || 5;
+    if (!mac || !mac.match(/^([0-9A-F]{2}:){5}[0-9A-F]{2}$/)) {
+        showToast('Entrez une adresse MAC valide (ex: AA:BB:CC:DD:EE:FF)', false);
+        return;
+    }
+    const resultEl = document.getElementById(`gw-cal-result-${gwId}`);
+    const btn = document.getElementById(`gw-cal-btn-${gwId}`);
+    btn.disabled = true;
+    resultEl.style.display = 'block';
+    resultEl.style.color = 'var(--text-dim)';
+    resultEl.textContent = `⏱ Démarrage...`;
+
+    // Lance la requête (le serveur va collecter pendant `dur` secondes)
+    const fetchPromise = apiFetch('POST', `/api/gateways/${gwId}/calibrate?tag_mac=${encodeURIComponent(mac)}&duration=${dur}`);
+
+    // Compte à rebours pendant que le serveur collecte
+    for (let i = dur; i > 0; i--) {
+        resultEl.textContent = `⏱ Mesure en cours... ${i}s — garde le beacon immobile à 1m`;
+        await new Promise(res => setTimeout(res, 1000));
+    }
+    resultEl.textContent = 'Calcul en cours...';
+
+    const r = await fetchPromise;
+    btn.disabled = false;
+    if (!r || !r.ok) {
+        resultEl.innerHTML = '✗ Erreur lors de la mesure';
+        resultEl.style.color = 'var(--danger)';
+        return;
+    }
+    const data = await r.json();
+    if (data.rssi_avg == null) {
+        resultEl.innerHTML = '✗ Tag non détecté — vérifie la MAC et la proximité';
+        resultEl.style.color = 'var(--danger)';
+        return;
+    }
+    resultEl.style.color = 'var(--success)';
+    let html = `✓ RSSI moyen : <strong>${data.rssi_avg} dBm</strong> (${data.samples} mesures) &nbsp;—&nbsp;
+        <a href="#" onclick="document.getElementById('gw-rssi-${gwId}').value=${data.rssi_avg};showToast('Valeur appliquée — pensez à enregistrer');return false" style="color:var(--accent)">Appliquer</a>`;
+
+    if (data.path_loss_suggestions && data.path_loss_suggestions.length > 0) {
+        html += `<div style="margin-top:8px;padding:8px;background:rgba(255,200,0,0.08);border:1px solid var(--warning);border-radius:4px;color:var(--text-primary)">`;
+        html += `<div style="font-size:11px;color:var(--warning);margin-bottom:6px">&#128161; Path loss calculé automatiquement pour les autres gateways :</div>`;
+        for (const s of data.path_loss_suggestions) {
+            html += `<div style="display:flex;align-items:center;gap:8px;margin:4px 0;font-size:11px">
+                <span style="color:var(--text-dim)">${s.gw_id}</span>
+                <span>RSSI mesuré : <strong>${s.rssi_measured} dBm</strong> à ~${s.distance_m}m</span>
+                <span>→ path_loss : <strong>${s.path_loss_suggested}</strong></span>
+                <a href="#" onclick="applyPathLoss('${s.gw_id}',${s.path_loss_suggested});return false" style="color:var(--accent)">Appliquer</a>
+            </div>`;
+        }
+        html += `</div>`;
+    }
+    resultEl.innerHTML = html;
+}
+
+async function applyPathLoss(gwId, value) {
+    const el = document.getElementById(`gw-pl-${gwId}`);
+    if (el) {
+        el.value = value;
+        showToast(`Path loss ${value} appliqué sur ${gwId} — enregistre la gateway`);
+    } else {
+        // La carte n'est peut-être pas encore ouverte — sauvegarder directement
+        const r = await apiFetch('PUT', `/api/gateways/${gwId}`, { path_loss: value });
+        if (r && r.ok) {
+            showToast(`Path loss ${value} sauvegardé sur ${gwId}`);
+            await clearRssiBuffer('');
+        }
+    }
+}
+
+async function saveGateway(gwId) {
+    const data = {
+        name:      document.getElementById(`gw-name-${gwId}`).value.trim(),
+        ip:        document.getElementById(`gw-ip-${gwId}`).value.trim(),
+        rssi_1m:   parseFloat(document.getElementById(`gw-rssi-${gwId}`).value),
+        path_loss: parseFloat(document.getElementById(`gw-pl-${gwId}`).value),
+        x:         parseFloat(document.getElementById(`gw-x-${gwId}`).value),
+        y:         parseFloat(document.getElementById(`gw-y-${gwId}`).value),
+    };
+    const r = await apiFetch('PUT', `/api/gateways/${gwId}`, data);
+    if (r && r.ok) { showToast('Gateway mise à jour'); loadGateways(); }
+    else showToast('Erreur', false);
+}
+
+async function deleteGateway(gwId) {
+    if (!confirm(`Supprimer la gateway ${gwId} ?`)) return;
+    const r = await apiFetch('DELETE', `/api/gateways/${gwId}`);
+    if (r && r.ok) { showToast('Gateway supprimée'); loadGateways(); }
+    else showToast('Erreur', false);
+}
+
+function showAddGwForm() {
+    const f = document.getElementById('form-add-gw');
+    f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+
+async function addGateway() {
+    const data = {
+        id:        document.getElementById('new-gw-id').value.trim(),
+        name:      document.getElementById('new-gw-name').value.trim(),
+        ip:        document.getElementById('new-gw-ip').value.trim(),
+        rssi_1m:   parseFloat(document.getElementById('new-gw-rssi').value),
+        path_loss: parseFloat(document.getElementById('new-gw-pl').value),
+        x:         parseFloat(document.getElementById('new-gw-x').value),
+        y:         parseFloat(document.getElementById('new-gw-y').value),
+    };
+    if (!data.id) { showToast('ID requis', false); return; }
+    const r = await apiFetch('POST', '/api/gateways', data);
+    if (r && r.ok) {
+        showToast('Gateway ajoutée');
+        document.getElementById('form-add-gw').style.display = 'none';
+        loadGateways();
+    } else showToast('Erreur', false);
+}
+
+async function loadPlan() {
+    _loaded.delete('plan');
+    const floor = document.getElementById('plan-floor-select').value;
+    const r = await apiFetch('GET', `/api/floorplan/${floor}`);
+
+    if (!r || !r.ok) { showPlanEmpty(); return; }
+    const meta = await r.json();
+    if (!meta) { showPlanEmpty(); return; }
+
+    // Remplir les champs dimensions
+    document.getElementById('plan-width').value  = meta.width  || 30;
+    document.getElementById('plan-height').value = meta.height || 10;
+
+    // Charger l'image
+    const img = document.getElementById('plan-img');
+    img.src = meta.url + '?t=' + Date.now(); // cache-bust
+
+    // Restaurer les positions des gateways
+    _planGateways = { gw1: null, gw2: null };
+    (meta.gateways || []).forEach(gw => {
+        if (gw.id in _planGateways) {
+            _planGateways[gw.id] = { px: gw.px, py: gw.py };
+        }
+    });
+
+    img.onload = () => {
+        showPlanEditor();
+        renderPlanMarkers();
+    };
+    // Si déjà en cache, onload peut ne pas se déclencher
+    if (img.complete) { showPlanEditor(); renderPlanMarkers(); }
+}
+
+function showPlanEditor() {
+    document.getElementById('plan-editor').style.display = 'block';
+    document.getElementById('plan-empty').style.display  = 'none';
+}
+
+function showPlanEmpty() {
+    document.getElementById('plan-editor').style.display = 'none';
+    document.getElementById('plan-empty').style.display  = 'block';
+}
+
+async function uploadPlan(input) {
+    const floor = document.getElementById('plan-floor-select').value;
+    const file = input.files[0];
+    if (!file) return;
+
+    const btn = document.getElementById('btn-import-plan');
+    btn.disabled = true;
+    btn.textContent = 'Import en cours…';
+
+    const form = new FormData();
+    form.append('file', file);
+
+    try {
+        const r = await fetch(`${API}/api/floorplan/${floor}`, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + getToken() },
+            body: form,
+        });
+
+        input.value = '';
+
+        if (r.ok) {
+            showToast(`Plan étage ${floor} importé`);
+            _planGateways = { gw1: null, gw2: null };
+            _loaded.delete('plan');
+            await loadPlan();
+        } else {
+            const d = await r.json().catch(() => ({}));
+            showToast(d.detail || `Erreur HTTP ${r.status}`, false);
+        }
+    } catch (e) {
+        showToast('Erreur réseau : ' + e.message, false);
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Importer un plan';
+}
+
+// ─── PLACEMENT INTERACTIF ────────────────────────────────────────────────────
+
+function startPlace(gwId) {
+    _placingGw = gwId;
+    const container = document.getElementById('plan-container');
+    container.style.cursor = 'crosshair';
+    document.getElementById('place-hint').style.display = 'inline';
+
+    // Boutons : désactiver pendant le placement
+    document.getElementById('btn-place-gw1').disabled = true;
+    document.getElementById('btn-place-gw2').disabled = true;
+}
+
+document.getElementById('plan-container').addEventListener('click', function (e) {
+    if (!_placingGw) return;
+
+    const img = document.getElementById('plan-img');
+    const rect = img.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width;
+    const py = (e.clientY - rect.top)  / rect.height;
+
+    _planGateways[_placingGw] = { px: Math.max(0, Math.min(1, px)), py: Math.max(0, Math.min(1, py)) };
+
+    // Fin du mode placement
+    _placingGw = null;
+    this.style.cursor = 'default';
+    document.getElementById('place-hint').style.display = 'none';
+    document.getElementById('btn-place-gw1').disabled = false;
+    document.getElementById('btn-place-gw2').disabled = false;
+
+    renderPlanMarkers();
+});
+
+function renderPlanMarkers() {
+    // Supprimer les anciens marqueurs
+    document.querySelectorAll('.gw-plan-marker').forEach(m => m.remove());
+
+    const container = document.getElementById('plan-container');
+    const img = document.getElementById('plan-img');
+
+    Object.entries(_planGateways).forEach(([gwId, pos]) => {
+        if (!pos) return;
+        const def = GW_DEFS[gwId];
+
+        const marker = document.createElement('div');
+        marker.className = 'gw-plan-marker';
+        marker.title = `${def.name} — cliquer pour retirer`;
+        marker.style.cssText = `
+            position: absolute;
+            left: ${pos.px * 100}%;
+            top:  ${pos.py * 100}%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+        `;
+
+        // Icône cercle
+        const dot = document.createElement('div');
+        dot.style.cssText = `
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: ${def.color};
+            border: 2px solid white;
+            box-shadow: 0 0 8px ${def.color}, 0 2px 4px rgba(0,0,0,0.5);
+        `;
+
+        // Label
+        const label = document.createElement('div');
+        label.textContent = def.label;
+        label.style.cssText = `
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 9px;
+            font-weight: 600;
+            color: white;
+            background: rgba(6,10,15,0.85);
+            padding: 1px 5px;
+            border: 1px solid ${def.color};
+            white-space: nowrap;
+            letter-spacing: 1px;
+        `;
+
+        marker.appendChild(dot);
+        marker.appendChild(label);
+
+        // Clic sur marqueur → retirer
+        marker.addEventListener('click', (e) => {
+            e.stopPropagation();
+            _planGateways[gwId] = null;
+            renderPlanMarkers();
+        });
+
+        container.appendChild(marker);
+    });
+}
+
+async function savePlan() {
+    const floor  = document.getElementById('plan-floor-select').value;
+    const width  = parseFloat(document.getElementById('plan-width').value)  || 30;
+    const height = parseFloat(document.getElementById('plan-height').value) || 10;
+
+    const gateways = Object.entries(_planGateways)
+        .filter(([, pos]) => pos !== null)
+        .map(([gwId, pos]) => ({
+            id:   gwId,
+            name: GW_DEFS[gwId].name,
+            ip:   GW_DEFS[gwId].ip,
+            px:   pos.px,
+            py:   pos.py,
+        }));
+
+    const r = await apiFetch('PUT', `/api/floorplan/${floor}`, { width, height, gateways });
+    if (r && r.ok) {
+        showToast(`Plan étage ${floor} sauvegardé (${gateways.length} gateway(s) placé(s))`);
+    } else {
+        showToast('Erreur lors de la sauvegarde', false);
+    }
+}
+
+async function deletePlan() {
+    const floor = document.getElementById('plan-floor-select').value;
+    if (!confirm(`Supprimer le plan de l'étage ${floor} ?`)) return;
+
+    const r = await apiFetch('DELETE', `/api/floorplan/${floor}`);
+    if (r && r.ok) {
+        showToast('Plan supprimé');
+        _planGateways = { gw1: null, gw2: null };
+        showPlanEmpty();
+    } else {
+        showToast('Erreur', false);
+    }
+}
+
+// ─── DÉMARRAGE ───────────────────────────────────────────────────────────────
+loadTab('users'); // Onglet actif par défaut
+</script>
+
+</body>
+</html>

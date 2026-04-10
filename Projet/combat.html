@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLETrack — Mode Combat</title>
+    <link rel="icon" href="data:,">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Chakra+Petch:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #060a0f;
+            --bg-panel: #0b1018;
+            --bg-surface: #101822;
+            --bg-elevated: #162030;
+            --bg-hover: #1a2840;
+            --border-dim: rgba(45, 65, 95, 0.4);
+            --border-active: rgba(60, 140, 200, 0.3);
+            --border-bright: rgba(60, 140, 200, 0.5);
+            --text-primary: #c8d6e5;
+            --text-secondary: #7a90a8;
+            --text-dim: #4a6080;
+            --text-ghost: #253545;
+            --accent: #2d8ac4;
+            --accent-bright: #3da5e8;
+            --accent-glow: rgba(45, 138, 196, 0.12);
+            --accent-glow-strong: rgba(45, 138, 196, 0.25);
+            --danger: #c44030;
+            --danger-dim: rgba(196, 64, 48, 0.12);
+            --danger-border: rgba(196, 64, 48, 0.3);
+            --success: #28a068;
+            --success-dim: rgba(40, 160, 104, 0.12);
+            --success-border: rgba(40, 160, 104, 0.35);
+            --amber: #c49030;
+            --amber-dim: rgba(196, 144, 48, 0.10);
+            --amber-border: rgba(196, 144, 48, 0.3);
+            --purple: #8870c4;
+            --purple-dim: rgba(136, 112, 196, 0.10);
+            --purple-border: rgba(136, 112, 196, 0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'IBM Plex Mono', monospace;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Layout principal --- */
+        .app {
+            display: grid;
+            grid-template-columns: 300px 1fr 340px;
+            grid-template-rows: 44px 1fr 32px;
+            height: 100vh;
+        }
+
+        /* --- Header --- */
+        .header {
+            grid-column: 1 / -1;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border-dim);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .header-logo {
+            font-family: 'Chakra Petch', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--text-primary);
+        }
+
+        .header-logo span { color: var(--accent); }
+
+        .header-mode {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 9px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--danger-border);
+            background: var(--danger-dim);
+            color: var(--danger);
+        }
+
+        .header-mode .pulse-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--danger);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 4px var(--danger); }
+            50% { opacity: 0.4; box-shadow: none; }
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .h-stat {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+
+        .h-stat-value {
+            font-family: 'Chakra Petch', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .h-stat-value.green { color: var(--success); }
+        .h-stat-value.dim { color: var(--text-dim); }
+        .h-stat-value.red { color: var(--danger); }
+
+        .h-stat-label {
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .clock {
+            font-size: 11px;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-secondary);
+            letter-spacing: 1.5px;
+        }
+
+        .btn-disconnect {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 4px 12px;
+            background: transparent;
+            border: 1px solid var(--border-dim);
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-disconnect:hover {
+            border-color: var(--danger-border);
+            color: var(--danger);
+            background: var(--danger-dim);
+        }
+
+        /* --- Sidebar gauche (Personnel) --- */
+        .sidebar-left {
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border-dim);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: none;
+        }
+        .app.sidebar-collapsed {
+            grid-template-columns: 0 1fr 340px;
+        }
+        .app.sidebar-collapsed .sidebar-left {
+            width: 0;
+            min-width: 0;
+        }
+        #sidebar-open-btn {
+            display: none;
+            position: absolute;
+            left: 8px;
+            top: 8px;
+            z-index: 20;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-dim);
+            color: var(--text-dim);
+            cursor: pointer;
+            padding: 5px 8px;
+            font-size: 9px;
+            letter-spacing: 2px;
+            font-family: inherit;
+        }
+        .app.sidebar-collapsed #sidebar-open-btn {
+            display: block;
+        }
+
+        .panel-header {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border-dim);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .panel-title {
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 6px 10px 6px 28px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-dim);
+            color: var(--text-primary);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-box input:focus {
+            border-color: var(--accent);
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-ghost);
+        }
+
+        .search-box svg {
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            stroke: var(--text-dim);
+        }
+
+        .personnel-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 4px 6px;
+        }
+
+        .personnel-list::-webkit-scrollbar { width: 3px; }
+        .personnel-list::-webkit-scrollbar-track { background: transparent; }
+        .personnel-list::-webkit-scrollbar-thumb { background: var(--border-dim); }
+
+        .person-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 8px;
+            cursor: pointer;
+            transition: background 0.15s;
+            border-left: 2px solid transparent;
+        }
+
+        .person-row:hover {
+            background: var(--bg-hover);
+        }
+
+        .person-row.selected {
+            background: var(--accent-glow);
+            border-left-color: var(--accent);
+        }
+
+        .person-row.offline {
+            opacity: 0.35;
+        }
+
+        .person-pip {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .person-pip.online {
+            background: var(--success);
+            box-shadow: 0 0 4px var(--success);
+        }
+
+        .person-pip.offline {
+            background: var(--text-dim);
+        }
+
+        .person-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .person-name {
+            font-size: 11px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .person-meta {
+            font-size: 9px;
+            color: var(--text-dim);
+            display: flex;
+            gap: 6px;
+        }
+
+        .person-zone {
+            font-size: 8px;
+            padding: 1px 5px;
+            background: var(--purple-dim);
+            border: 1px solid var(--purple-border);
+            color: var(--purple);
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .person-coords {
+            font-size: 9px;
+            color: var(--text-ghost);
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+
+        /* --- Zone carte centrale --- */
+        .map-area {
+            background: var(--bg-deep);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .map-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Sélecteur d'étage */
+        .floor-selector {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-dim);
+            z-index: 10;
+        }
+
+        .floor-btn {
+            width: 36px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            position: relative;
+        }
+
+        .floor-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .floor-btn.active {
+            background: var(--accent-glow-strong);
+            color: var(--accent-bright);
+        }
+
+        .floor-btn.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--accent);
+        }
+
+        .floor-btn .count {
+            position: absolute;
+            top: 2px;
+            right: 3px;
+            font-size: 7px;
+            color: var(--success);
+        }
+
+        /* Info carte */
+        .map-info {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            display: flex;
+            gap: 12px;
+            font-size: 9px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            z-index: 10;
+        }
+
+        .map-info span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Zoom controls */
+        .zoom-controls {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            z-index: 10;
+        }
+
+        .zoom-btn {
+            width: 28px;
+            height: 28px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-dim);
+            color: var(--text-secondary);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .zoom-btn:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-active);
+            color: var(--text-primary);
+        }
+
+        /* --- Sidebar droite (Alertes) --- */
+        .sidebar-right {
+            background: var(--bg-panel);
+            border-left: 1px solid var(--border-dim);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .app.alerts-collapsed {
+            grid-template-columns: 300px 1fr 0;
+        }
+        .app.sidebar-collapsed.alerts-collapsed {
+            grid-template-columns: 0 1fr 0;
+        }
+        .app.alerts-collapsed .sidebar-right {
+            width: 0;
+            min-width: 0;
+        }
+        #alerts-open-btn {
+            display: none;
+            position: absolute;
+            right: 8px;
+            top: 8px;
+            z-index: 20;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-dim);
+            color: var(--text-dim);
+            cursor: pointer;
+            padding: 5px 8px;
+            font-size: 9px;
+            letter-spacing: 2px;
+            font-family: inherit;
+        }
+        .app.alerts-collapsed #alerts-open-btn {
+            display: block;
+        }
+
+        .alert-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 4px 8px;
+        }
+
+        .alert-list::-webkit-scrollbar { width: 3px; }
+        .alert-list::-webkit-scrollbar-thumb { background: var(--border-dim); }
+
+        .alert-card {
+            padding: 10px;
+            margin-bottom: 4px;
+            border-left: 2px solid;
+            background: var(--bg-surface);
+            transition: opacity 0.3s;
+        }
+
+        .alert-card.enter {
+            border-left-color: var(--amber);
+            background: var(--amber-dim);
+        }
+
+        .alert-card.exit {
+            border-left-color: var(--danger);
+            background: var(--danger-dim);
+        }
+
+        .alert-card.ack {
+            opacity: 0.25;
+        }
+
+        .alert-type {
+            font-size: 8px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+
+        .alert-card.enter .alert-type { color: var(--amber); }
+        .alert-card.exit .alert-type { color: var(--danger); }
+
+        .alert-person-name {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .alert-zone-name {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        .alert-time {
+            font-size: 9px;
+            color: var(--text-dim);
+            font-variant-numeric: tabular-nums;
+            margin-top: 3px;
+        }
+
+        .alert-ack {
+            margin-top: 5px;
+            padding: 2px 8px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 8px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            background: transparent;
+            border: 1px solid var(--border-dim);
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .alert-ack:hover {
+            border-color: var(--border-active);
+            color: var(--text-secondary);
+            background: var(--bg-elevated);
+        }
+
+        /* --- Footer --- */
+        .footer {
+            grid-column: 1 / -1;
+            background: var(--bg-panel);
+            border-top: 1px solid var(--border-dim);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+
+        .footer-left, .footer-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .f-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .f-dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+        }
+
+        .f-dot.green { background: var(--success); box-shadow: 0 0 3px var(--success); }
+        .f-dot.amber { background: var(--amber); }
+
+        /* --- SVG Carte --- */
+        .building-grid line {
+            stroke: rgba(45, 65, 95, 0.15);
+            stroke-width: 0.5;
+        }
+
+        .building-outline {
+            fill: var(--bg-surface);
+            stroke: var(--border-active);
+            stroke-width: 1;
+        }
+
+        .zone-polygon {
+            stroke-width: 1;
+            stroke-dasharray: 4 3;
+        }
+
+        .zone-polygon.restricted {
+            fill: rgba(196, 64, 48, 0.06);
+            stroke: var(--danger-border);
+        }
+
+        .zone-polygon.normal {
+            fill: var(--purple-dim);
+            stroke: var(--purple-border);
+        }
+
+        .zone-label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 8px;
+            fill: var(--text-dim);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .grid-label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 7px;
+            fill: var(--text-ghost);
+        }
+
+        /* Points personnel */
+        .person-dot-outer {
+            animation: dot-pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes dot-pulse {
+            0%, 100% { opacity: 0.5; r: 10; }
+            50% { opacity: 0; r: 16; }
+        }
+
+        .person-label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 7.5px;
+            fill: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .person-coord-label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 6px;
+            fill: var(--text-dim);
+        }
+
+        /* Gateway markers */
+        .gw-marker {
+            fill: none;
+            stroke: var(--accent);
+            stroke-width: 0.8;
+        }
+
+        .gw-label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 6.5px;
+            fill: var(--accent);
+        }
+
+        .gw-range {
+            fill: var(--accent-glow);
+            stroke: none;
+        }
+        #toast-container {
+            position: fixed;
+            bottom: 40px;
+            right: 16px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+        .toast {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-active);
+            color: var(--text-primary);
+            font-size: 12px;
+            padding: 10px 14px;
+            border-radius: 4px;
+            animation: toastIn 0.2s ease;
+            opacity: 1;
+            transition: opacity 0.4s ease;
+        }
+        .toast.ok  { border-left: 3px solid var(--success); }
+        .toast.err { border-left: 3px solid var(--danger);  }
+        @keyframes toastIn { from { transform: translateX(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+    </style>
+</head>
+<body>
+<div id="toast-container"></div>
+
+<div id="gw-alert-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:999;background:var(--danger);color:#fff;font-size:12px;font-weight:600;padding:7px 16px;align-items:center;gap:10px;letter-spacing:0.5px">
+    <span style="font-size:16px">&#9888;</span>
+    <span id="gw-alert-text"></span>
+</div>
+<div id="ble-alert-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:998;background:#b85a20;color:#fff;font-size:12px;font-weight:600;padding:7px 16px;align-items:center;gap:10px;letter-spacing:0.5px">
+    <span style="font-size:16px">&#128268;</span>
+    <span id="ble-alert-text"></span>
+</div>
+
+<div class="app" id="main-app">
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <div class="header-logo">BLE<span>Track</span></div>
+            <div class="header-mode">
+                <div class="pulse-dot"></div>
+                Combat
+            </div>
+        </div>
+        <div class="header-stats">
+            <div class="h-stat">
+                <div class="h-stat-value green" id="stat-online">12</div>
+                <div class="h-stat-label">En ligne</div>
+            </div>
+            <div class="h-stat">
+                <div class="h-stat-value dim" id="stat-offline">3</div>
+                <div class="h-stat-label">Hors ligne</div>
+            </div>
+            <div class="h-stat">
+                <div class="h-stat-value red" id="stat-alerts">4</div>
+                <div class="h-stat-label">Alertes</div>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="clock" id="clock">--:--:--</div>
+            <button id="btn-sound" onclick="toggleSound()" title="Activer/désactiver le son" style="background:none;border:1px solid var(--border-active);color:var(--text-secondary);padding:5px 10px;border-radius:4px;cursor:pointer;font-size:16px;line-height:1">🔔</button>
+            <button class="btn-disconnect">Déconnexion</button>
+        </div>
+    </header>
+
+    <!-- Sidebar gauche — Personnel -->
+    <div class="sidebar-left" id="sidebar-left">
+        <div class="panel-header">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+                <div class="panel-title">Personnel — Étage <span id="sidebar-floor">1</span></div>
+                <button onclick="toggleSidebar()" title="Masquer" style="background:none;border:none;color:var(--text-dim);cursor:pointer;padding:2px 4px;font-size:14px;line-height:1">&#x2715;</button>
+            </div>
+            <div class="search-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" placeholder="Rechercher..." id="search">
+            </div>
+        </div>
+        <div class="personnel-list" id="personnel-list"></div>
+    </div>
+
+
+    <!-- Carte centrale -->
+    <div class="map-area" style="position:relative">
+        <button id="sidebar-open-btn" onclick="toggleSidebar()">&#9776; PERSONNEL</button>
+        <button id="alerts-open-btn" onclick="toggleAlerts()">ALERTES &#9776;</button>
+
+        <!-- Sélecteur d'étage -->
+        <div class="floor-selector" id="floor-selector"></div>
+
+        <!-- Zoom -->
+        <div class="zoom-controls">
+            <button class="zoom-btn" onclick="zoomIn()">+</button>
+            <button class="zoom-btn" onclick="zoomOut()">&minus;</button>
+        </div>
+
+        <!-- Plan de fond (img HTML positionné dynamiquement sur le viewBox SVG) -->
+        <img id="floorplan-bg" style="position:absolute;pointer-events:none;display:none;opacity:0.65;object-fit:fill">
+
+        <!-- Carte SVG -->
+        <svg class="map-canvas" id="map-svg" viewBox="-5 -3 110 21"></svg>
+
+        <!-- Infos carte -->
+        <div class="map-info">
+            <span>Étage <strong id="floor-label">1</strong></span>
+            <span id="map-dims">30m &times; 10m</span>
+            <span id="map-persons">0 personnes visibles</span>
+            <span style="display:flex;align-items:center;gap:6px;margin-left:12px">
+                <span style="display:inline-block;width:var(--scale-bar-w,60px);height:3px;border:1px solid var(--accent);border-top:none;position:relative">
+                    <span style="position:absolute;left:50%;transform:translateX(-50%);top:-14px;font-size:9px;color:var(--accent)" id="scale-label">10m</span>
+                </span>
+            </span>
+        </div>
+
+    </div>
+
+    <!-- Sidebar droite — Alertes -->
+    <div class="sidebar-right">
+        <div class="panel-header">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+                <div class="panel-title">Alertes <span id="alert-count">(0)</span></div>
+                <button onclick="toggleAlerts()" title="Masquer" style="background:none;border:none;color:var(--text-dim);cursor:pointer;padding:2px 4px;font-size:14px;line-height:1">&#x2715;</button>
+            </div>
+        </div>
+        <div class="alert-list" id="alert-list"></div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class="footer-left">
+            <div class="f-indicator"><div class="f-dot green"></div> Réseau eth0</div>
+            <div class="f-indicator"><div class="f-dot green"></div> MQTT actif</div>
+            <div class="f-indicator"><div class="f-dot green"></div> WebSocket &nbsp;<span id="ws-last-update" style="color:var(--text-dim);font-size:10px">—</span></div>
+        </div>
+        <div class="footer-right" id="gw-status-bar">
+            <div class="f-indicator"><div class="f-dot" id="gw-dot-gw1"></div> <span id="gw-label-gw1">Pi 4 — 192.168.1.10</span></div>
+            <div class="f-indicator"><div class="f-dot" id="gw-dot-gw2"></div> <span id="gw-label-gw2">Pi 500 — 192.168.1.11</span></div>
+            <span>v1.0.0</span>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// ─── AUTH ────────────────────────────────────────────────────────────────────
+const API = window.location.origin;
+
+function getToken() { return localStorage.getItem('bt_token'); }
+function getRole()  { return localStorage.getItem('bt_role'); }
+function getUser()  { return localStorage.getItem('bt_user'); }
+
+function logout() {
+    localStorage.removeItem('bt_token');
+    localStorage.removeItem('bt_role');
+    localStorage.removeItem('bt_user');
+    window.location.href = '/';
+}
+
+// Vérification auth — rediriger si pas connecté
+if (!getToken()) { window.location.replace('/'); }
+
+// Timeout 30 min d'inactivité
+let _activityTimer;
+function resetActivityTimer() {
+    clearTimeout(_activityTimer);
+    _activityTimer = setTimeout(() => {
+        logout();
+        window.location.href = '/?session=expired';
+    }, 30 * 60 * 1000);
+}
+['click', 'keydown', 'mousemove', 'touchstart'].forEach(e =>
+    document.addEventListener(e, resetActivityTimer, { passive: true })
+);
+resetActivityTimer();
+
+document.querySelector('.btn-disconnect').addEventListener('click', logout);
+
+// ─── HORLOGE ─────────────────────────────────────────────────────────────────
+function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent =
+        [now.getHours(), now.getMinutes(), now.getSeconds()]
+        .map(n => String(n).padStart(2, '0')).join(':');
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ─── DONNÉES ─────────────────────────────────────────────────────────────────
+const COLORS = ['#3da5e8','#28a068','#c49030','#c44030','#8870c4','#3dc4a8','#c46890','#50a8c4','#e87040','#6898d8','#a0c440','#d8a020'];
+
+// Espace SVG fixe : 0-100 (x), 0-15 (y)
+// Conversion depuis mètres réels : x_svg = x_m / plan_width  * 100
+//                                  y_svg = y_m / plan_height * 15
+let PLAN_WIDTH  = 30;  // mis à jour depuis l'API floorplan
+let PLAN_HEIGHT = 10;
+
+function toSvgX(xm) { return (xm / PLAN_WIDTH)  * 100; }
+function toSvgY(ym) { return (ym / PLAN_HEIGHT) * 15; }
+
+// Données live — remplies par WebSocket / API
+let PERSONNEL = [];
+let ZONES     = [];
+let ALERTS    = [];
+
+// Gateways — positions mises à jour depuis le plan admin
+let GATEWAYS = [];
+
+// Alertes BLE locales (tags déconnectés) — {tag_mac: {name, since}}
+const BLE_OFFLINE = {};
+// Flag premier chargement (pour ne pas afficher de toast à l'init)
+let _bleReady = false;
+
+// Plan du bâtiment (par étage)
+let FLOORPLAN = {}; // { [floor]: { url, width, height, gateways } }
+
+let currentFloor = 1;
+let selectedPerson = null;
+
+// ─── SÉLECTEUR D'ÉTAGE ───────────────────────────────────────────────────────
+function renderFloors() {
+    const el = document.getElementById('floor-selector');
+    let html = '';
+    for (let i = 10; i >= 1; i--) {
+        const count = PERSONNEL.filter(p => p.online && p.floor === i).length;
+        html += `<button class="floor-btn ${i === currentFloor ? 'active' : ''}" onclick="setFloor(${i})">
+                    ${i}${count > 0 ? `<span class="count">${count}</span>` : ''}
+                 </button>`;
+    }
+    el.innerHTML = html;
+}
+
+function toggleSidebar() {
+    document.querySelector('.app').classList.toggle('sidebar-collapsed');
+    setTimeout(() => { updateFloorplanBg(); updateScaleBar(); }, 50);
+}
+
+function toggleAlerts() {
+    document.querySelector('.app').classList.toggle('alerts-collapsed');
+    setTimeout(() => { updateFloorplanBg(); updateScaleBar(); }, 50);
+}
+
+async function setFloor(n) {
+    currentFloor = n;
+    document.getElementById('floor-label').textContent  = n;
+    document.getElementById('sidebar-floor').textContent = n;
+
+    // Mettre à jour les dimensions si un plan existe pour cet étage
+    await loadFloorplan(n);
+    const plan = FLOORPLAN[n];
+    if (plan) {
+        PLAN_WIDTH  = plan.width  || 30;
+        PLAN_HEIGHT = plan.height || 10;
+        if (plan.gateways && plan.gateways.length > 0) {
+            GATEWAYS = plan.gateways.map(gw => ({
+                id: gw.name || gw.id,
+                x:  toSvgX(gw.px * plan.width),
+                y:  toSvgY(gw.py * plan.height),
+            }));
+        }
+    }
+    document.getElementById('map-dims').textContent = `${PLAN_WIDTH}m × ${PLAN_HEIGHT}m`;
+
+    renderFloors();
+    renderMap();
+    renderPersonnel();
+}
+
+// ─── LISTE PERSONNEL ─────────────────────────────────────────────────────────
+function renderPersonnel() {
+    const el = document.getElementById('personnel-list');
+    const query = document.getElementById('search').value.toLowerCase();
+    const visible = PERSONNEL.filter(p => !p.online || p.floor === currentFloor);
+    const sorted = [...visible].sort((a, b) => {
+        if (a.online && !b.online) return -1;
+        if (!a.online && b.online) return 1;
+        return a.name.localeCompare(b.name);
+    });
+
+    let html = '';
+    sorted.forEach(p => {
+        if (query && !p.name.toLowerCase().includes(query) &&
+            !p.role.toLowerCase().includes(query) &&
+            !p.tag_mac.toLowerCase().includes(query)) return;
+
+        const isSelected = selectedPerson === p.tag_mac;
+        const status = p.online ? 'online' : 'offline';
+        html += `
+            <div class="person-row ${status} ${isSelected ? 'selected' : ''}"
+                 onclick="selectPerson('${p.tag_mac}')">
+                <div class="person-pip ${status}"></div>
+                <div class="person-info">
+                    <div class="person-name">${p.name}</div>
+                    <div class="person-meta">
+                        <span>${p.role || '—'}</span>
+                        ${p.online ? `<span>${p.tag_mac}</span>` : ''}
+                    </div>
+                </div>
+                ${p.online ? `<div class="person-coords">${p.x}m, ${p.y}m</div>` : ''}
+            </div>`;
+    });
+
+    el.innerHTML = html || '<div style="padding:20px;color:var(--text-dim);font-size:11px;text-align:center">Aucun résultat</div>';
+
+    // Mise à jour des stats header
+    const online  = PERSONNEL.filter(p => p.online).length;
+    const offline = PERSONNEL.length - online;
+    document.getElementById('stat-online').textContent  = online;
+    document.getElementById('stat-offline').textContent = offline;
+    document.getElementById('map-persons').textContent  =
+        PERSONNEL.filter(p => p.online && p.floor === currentFloor).length + ' personnes visibles';
+}
+
+function selectPerson(mac) {
+    selectedPerson = selectedPerson === mac ? null : mac;
+    renderPersonnel();
+    renderMap();
+}
+
+document.getElementById('search').addEventListener('input', renderPersonnel);
+
+// ─── SON ──────────────────────────────────────────────────────────────────────
+let _soundEnabled = localStorage.getItem('bletrack-sound') !== 'off';
+
+function toggleSound() {
+    _soundEnabled = !_soundEnabled;
+    localStorage.setItem('bletrack-sound', _soundEnabled ? 'on' : 'off');
+    document.getElementById('btn-sound').textContent = _soundEnabled ? '🔔' : '🔕';
+    document.getElementById('btn-sound').style.color = _soundEnabled ? 'var(--text-secondary)' : 'var(--text-dim)';
+    if (_soundEnabled) _playBleep(880, 0.1, 'sine'); // bip de confirmation
+}
+
+function _playBleep(freq, duration, type = 'sine', gain = 0.3) {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const vol = ctx.createGain();
+        osc.connect(vol); vol.connect(ctx.destination);
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(freq * 0.5, ctx.currentTime + duration);
+        vol.gain.setValueAtTime(gain, ctx.currentTime);
+        vol.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + duration);
+        osc.onended = () => ctx.close();
+    } catch (_) {}
+}
+
+function playAlertSound() {
+    if (!_soundEnabled) return;
+    // Double bip descendant — alerte perte BLE
+    _playBleep(880, 0.15);
+    setTimeout(() => _playBleep(660, 0.2), 180);
+}
+
+// Initialiser l'icône au chargement
+document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('btn-sound');
+    if (btn) {
+        btn.textContent = _soundEnabled ? '🔔' : '🔕';
+        btn.style.color = _soundEnabled ? 'var(--text-secondary)' : 'var(--text-dim)';
+    }
+});
+
+// ─── TOASTS ───────────────────────────────────────────────────────────────────
+function showToast(msg, ok = true) {
+    const el = document.createElement('div');
+    el.className = 'toast ' + (ok ? 'ok' : 'err');
+    el.textContent = msg;
+    document.getElementById('toast-container').appendChild(el);
+    setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 400); }, 3000);
+}
+
+// ─── ALERTES ─────────────────────────────────────────────────────────────────
+function updateBleAlerts(positions) {
+    // Miroir direct de l'état serveur — pas de détection de transitions fragile
+    positions.forEach(p => {
+        const wasOffline = p.tag_mac in BLE_OFFLINE;
+        const isOffline  = !p.online;
+
+        if (isOffline && !wasOffline) {
+            BLE_OFFLINE[p.tag_mac] = { name: p.name, since: new Date() };
+            if (_bleReady) {
+                playAlertSound();
+                showToast(`Signal BLE perdu : ${p.name}`, false);
+                if (document.querySelector('.app').classList.contains('alerts-collapsed'))
+                    toggleAlerts();
+            }
+        } else if (!isOffline && wasOffline) {
+            delete BLE_OFFLINE[p.tag_mac];
+            if (_bleReady) showToast(`Signal BLE retrouvé : ${p.name}`, true);
+        }
+    });
+
+    // Premier chargement : ouvrir les alertes si des tags déjà offline
+    if (!_bleReady) {
+        _bleReady = true;
+        if (Object.keys(BLE_OFFLINE).length > 0) {
+            if (document.querySelector('.app').classList.contains('alerts-collapsed'))
+                toggleAlerts();
+        }
+    }
+
+    // Bandeau BLE (persistent, visible même si panneau alertes fermé)
+    const bleBanner   = document.getElementById('ble-alert-banner');
+    const offlineList = Object.values(BLE_OFFLINE).map(b => b.name).join(', ');
+    if (offlineList) {
+        bleBanner.style.display = 'flex';
+        document.getElementById('ble-alert-text').textContent =
+            `Signal BLE perdu : ${offlineList}`;
+    } else {
+        bleBanner.style.display = 'none';
+    }
+    _adjustBannerPadding();
+
+    renderAlerts();
+}
+
+function renderAlerts() {
+    const el = document.getElementById('alert-list');
+    let html = '';
+
+    // Alertes BLE (tags déconnectés) — en tête, non acquittables
+    Object.entries(BLE_OFFLINE).forEach(([mac, info]) => {
+        const t = info.since.toLocaleTimeString('fr-FR');
+        html += `
+            <div class="alert-card exit" style="border-left-color:#ff6b35">
+                <div class="alert-type" style="color:#ff6b35">&#x26A0; Signal BLE perdu</div>
+                <div class="alert-person-name">${info.name}</div>
+                <div class="alert-zone-name" style="color:var(--text-dim)">Beacon hors de portée</div>
+                <div class="alert-time">${t}</div>
+            </div>`;
+    });
+
+    // Alertes de zone
+    ALERTS.forEach(a => {
+        const isEnter = a.type === 'zone_enter';
+        html += `
+            <div class="alert-card ${isEnter ? 'enter' : 'exit'} ${a.acknowledged ? 'ack' : ''}">
+                <div class="alert-type">${isEnter ? '&#x2192; Entrée zone' : '&#x2190; Sortie zone'}</div>
+                <div class="alert-person-name">${a.person_name}</div>
+                <div class="alert-zone-name">${a.zone_name}</div>
+                <div class="alert-time">${new Date(a.timestamp * 1000).toLocaleTimeString('fr-FR')}</div>
+                ${!a.acknowledged ? `<button class="alert-ack" onclick="ackAlert('${a.id}')">Acquitter</button>` : ''}
+            </div>`;
+    });
+
+    el.innerHTML = html || '<div style="padding:20px;color:var(--text-dim);font-size:11px;text-align:center">Aucune alerte</div>';
+
+    const unacked = ALERTS.filter(a => !a.acknowledged).length + Object.keys(BLE_OFFLINE).length;
+    document.getElementById('alert-count').textContent = `(${unacked})`;
+    document.getElementById('stat-alerts').textContent = unacked;
+}
+
+async function ackAlert(id) {
+    await fetch(API + '/api/alerts/' + id + '/ack', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + getToken() },
+    });
+    const a = ALERTS.find(x => x.id === id);
+    if (a) a.acknowledged = true;
+    renderAlerts();
+}
+
+// ─── CARTE SVG ───────────────────────────────────────────────────────────────
+function renderMap() {
+    const svg = document.getElementById('map-svg');
+    let html = '';
+
+    // Grille (sans labels — affichés dans la barre du bas)
+    for (let x = 0; x <= 100; x += 10) {
+        html += `<line class="building-grid" x1="${x}" y1="-3" x2="${x}" y2="18"/>`;
+    }
+    for (let y = 0; y <= 15; y += 5) {
+        html += `<line class="building-grid" x1="-5" y1="${y}" x2="105" y2="${y}"/>`;
+    }
+
+    // Contour bâtiment (fond transparent si un plan est chargé)
+    const hasPlan = FLOORPLAN[currentFloor] && FLOORPLAN[currentFloor].url;
+    html += `<rect class="building-outline" x="0" y="0" width="100" height="15" rx="0.5" fill="${hasPlan ? 'none' : 'var(--bg-surface)'}"/>`;
+
+    // Zones (depuis API, coordonnées en mètres → SVG)
+    ZONES.forEach(z => {
+        if (z.floor !== currentFloor || z.polygon.length < 3) return;
+        const pts = z.polygon.map(([px, py]) =>
+            `${toSvgX(px).toFixed(1)},${toSvgY(py).toFixed(1)}`
+        ).join(' ');
+        const cls = (z.alert_on_enter || z.alert_on_exit) ? 'restricted' : 'normal';
+        const cx  = toSvgX(z.polygon.reduce((s, p) => s + p[0], 0) / z.polygon.length);
+        const cy  = toSvgY(z.polygon.reduce((s, p) => s + p[1], 0) / z.polygon.length);
+        html += `<polygon class="zone-polygon ${cls}" points="${pts}"/>`;
+        html += `<text class="zone-label" x="${cx.toFixed(1)}" y="${(cy + 1).toFixed(1)}" text-anchor="middle">${z.name}</text>`;
+    });
+
+    // Gateways
+    GATEWAYS.forEach(gw => {
+        html += `<circle class="gw-range" cx="${gw.x}" cy="${gw.y}" r="15"/>`;
+        html += `<rect class="gw-marker" x="${gw.x - 1.5}" y="${gw.y - 1.5}" width="3" height="3" rx="0.3"/>`;
+        html += `<line class="gw-marker" x1="${gw.x}" y1="${gw.y - 3}" x2="${gw.x}" y2="${gw.y - 1.5}"/>`;
+        html += `<text class="gw-label" x="${gw.x}" y="${gw.y + 4}" text-anchor="middle">${gw.id}</text>`;
+    });
+
+    // Personnel
+    PERSONNEL.forEach((p, i) => {
+        if (!p.online || p.floor !== currentFloor) return;
+        const c = COLORS[i % COLORS.length];
+        const svgX = toSvgX(p.x).toFixed(1);
+        const svgY = toSvgY(p.y).toFixed(1);
+        const isSelected = selectedPerson === p.tag_mac;
+        const r = isSelected ? 1.8 : 1.2;
+
+        // Cercle d'incertitude (accuracy en mètres → unités SVG)
+        if (p.accuracy > 0) {
+            const accR = (p.accuracy / PLAN_WIDTH) * 100;
+            html += `<circle cx="${svgX}" cy="${svgY}" r="${accR.toFixed(2)}"
+                        fill="${c}" fill-opacity="0.07"
+                        stroke="${c}" stroke-opacity="0.25" stroke-width="0.3"
+                        stroke-dasharray="1 0.8"/>`;
+        }
+
+        // Halo animé
+        html += `<circle cx="${svgX}" cy="${svgY}" r="${isSelected ? 5 : 4}"
+                    fill="${c}" opacity="0">
+                    <animate attributeName="r" values="${isSelected ? '5;9;5' : '4;7;4'}" dur="3s" begin="${i * 0.3}s" repeatCount="indefinite"/>
+                    <animate attributeName="opacity" values="0.35;0;0.35" dur="3s" begin="${i * 0.3}s" repeatCount="indefinite"/>
+                 </circle>`;
+
+        // Point central
+        html += `<circle cx="${svgX}" cy="${svgY}" r="${r}" fill="${c}"
+                    ${isSelected ? `stroke="white" stroke-width="0.4"` : ''}
+                    style="cursor:pointer; filter: drop-shadow(0 0 2px ${c});"
+                    onclick="selectPerson('${p.tag_mac}')"/>`;
+
+        const initials = p.name.split(' ').map(w => w[0]).join('');
+        html += `<text class="person-label" x="${svgX}" y="${(parseFloat(svgY) - 2.5).toFixed(1)}" text-anchor="middle">${isSelected ? p.name.split(' ')[0] : initials}</text>`;
+
+        if (isSelected) {
+            html += `<text class="person-coord-label" x="${svgX}" y="${(parseFloat(svgY) + 3.5).toFixed(1)}" text-anchor="middle">${p.x}m, ${p.y}m — ±${p.accuracy}m</text>`;
+        }
+    });
+
+    svg.innerHTML = html;
+    updateFloorplanBg();
+}
+
+function updateFloorplanBg() {
+    const bg  = document.getElementById('floorplan-bg');
+    const plan = FLOORPLAN[currentFloor];
+    if (!plan || !plan.url) { bg.style.display = 'none'; return; }
+
+    const svg = document.getElementById('map-svg');
+    const vb  = svg.getAttribute('viewBox').split(' ').map(Number);
+    const [vx, vy, vw, vh] = vb;
+
+    // Bâtiment en coordonnées SVG : (0,0) → (100,15)
+    const left   = (0   - vx) / vw * 100;
+    const top    = (0   - vy) / vh * 100;
+    const width  = 100        / vw * 100;
+    const height = 15         / vh * 100;
+
+    if (bg.dataset.src !== plan.url) {
+        bg.src = plan.url;
+        bg.dataset.src = plan.url;
+    }
+    bg.style.display = 'block';
+    bg.style.left    = left   + '%';
+    bg.style.top     = top    + '%';
+    bg.style.width   = width  + '%';
+    bg.style.height  = height + '%';
+}
+
+// ─── ZOOM ────────────────────────────────────────────────────────────────────
+let zoomLevel = 0;
+// viewBox : "x y width height" — bâtiment SVG = (0,0) → (100,15)
+const ZOOM_SIZES = [[110, 21], [70, 13], [35, 9]]; // largeur × hauteur par niveau
+let _vb = { x: -5, y: -3, w: 110, h: 21 };        // viewBox courant
+
+function applyViewBox() {
+    document.getElementById('map-svg').setAttribute('viewBox', `${_vb.x} ${_vb.y} ${_vb.w} ${_vb.h}`);
+    updateFloorplanBg();
+    updateScaleBar();
+}
+
+function updateScaleBar() {
+    const svg  = document.getElementById('map-svg');
+    const rect = svg.getBoundingClientRect();
+    if (!rect.width) return;
+
+    // 10 SVG units = PLAN_WIDTH/10 mètres réels
+    // 1 SVG unit = PLAN_WIDTH/100 mètres = rect.width / _vb.w pixels
+    const pxPerMeter = (rect.width / _vb.w) * (100 / PLAN_WIDTH);
+    // Choisir une graduation lisible (5m, 10m, 20m, 50m...)
+    const targets = [1, 2, 5, 10, 20, 50, 100];
+    const ideal   = 80 / pxPerMeter; // viser ~80px pour la barre
+    const snap    = targets.reduce((a, b) => Math.abs(b - ideal) < Math.abs(a - ideal) ? b : a);
+    const barPx   = snap * pxPerMeter;
+
+    document.documentElement.style.setProperty('--scale-bar-w', barPx.toFixed(1) + 'px');
+    document.getElementById('scale-label').textContent = snap + 'm';
+}
+
+function zoomIn() {
+    if (zoomLevel < ZOOM_SIZES.length - 1) {
+        const cx = _vb.x + _vb.w / 2;
+        const cy = _vb.y + _vb.h / 2;
+        zoomLevel++;
+        _vb.w = ZOOM_SIZES[zoomLevel][0];
+        _vb.h = ZOOM_SIZES[zoomLevel][1];
+        _vb.x = cx - _vb.w / 2;
+        _vb.y = cy - _vb.h / 2;
+        applyViewBox();
+    }
+}
+
+function zoomOut() {
+    if (zoomLevel > 0) {
+        const cx = _vb.x + _vb.w / 2;
+        const cy = _vb.y + _vb.h / 2;
+        zoomLevel--;
+        _vb.w = ZOOM_SIZES[zoomLevel][0];
+        _vb.h = ZOOM_SIZES[zoomLevel][1];
+        _vb.x = cx - _vb.w / 2;
+        _vb.y = cy - _vb.h / 2;
+        applyViewBox();
+    }
+}
+
+// ─── PAN (glisser-déposer) ────────────────────────────────────────────────────
+(function initPan() {
+    const svg = document.getElementById('map-svg');
+    let dragging = false, startX, startY, startVbX, startVbY;
+
+    svg.style.cursor = 'grab';
+
+    svg.addEventListener('mousedown', e => {
+        if (e.button !== 0) return;
+        dragging = true;
+        startX = e.clientX; startY = e.clientY;
+        startVbX = _vb.x;   startVbY = _vb.y;
+        svg.style.cursor = 'grabbing';
+        e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', e => {
+        if (!dragging) return;
+        const rect = svg.getBoundingClientRect();
+        const dx = -(e.clientX - startX) * (_vb.w / rect.width);
+        const dy = -(e.clientY - startY) * (_vb.h / rect.height);
+        _vb.x = startVbX + dx;
+        _vb.y = startVbY + dy;
+        applyViewBox();
+    });
+
+    window.addEventListener('mouseup', () => {
+        dragging = false;
+        svg.style.cursor = 'grab';
+    });
+
+    // Zoom molette
+    svg.addEventListener('wheel', e => {
+        e.preventDefault();
+        if (e.deltaY < 0) zoomIn(); else zoomOut();
+    }, { passive: false });
+})();
+
+// ─── WEBSOCKET ───────────────────────────────────────────────────────────────
+let ws;
+let wsReconnectDelay = 2000;
+
+function connectWebSocket() {
+    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    ws = new WebSocket(`${proto}//${window.location.host}/ws/live?token=${getToken()}`);
+
+    ws.onopen = () => {
+        wsReconnectDelay = 2000;
+        updateFooterWS(true);
+    };
+
+    ws.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        if (msg.type === 'positions') {
+            // Debug : log l'état online de chaque tag dans la console
+            if (msg.data && msg.data.length > 0) {
+                const statuses = msg.data.map(p => `${p.name}: ${p.online ? 'EN LIGNE' : 'HORS LIGNE'}`).join(', ');
+                console.debug('[BLE]', statuses);
+            }
+            PERSONNEL = msg.data;
+            document.getElementById('ws-last-update').textContent =
+                'MAJ ' + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+            if (msg.gateways) updateGatewayAlerts(msg.gateways);
+            updateBleAlerts(msg.data);
+            renderPersonnel();
+            renderFloors();
+            renderMap();
+        } else if (msg.type === 'alert_acked') {
+            const a = ALERTS.find(x => x.id === msg.id);
+            if (a) { a.acknowledged = true; renderAlerts(); }
+        }
+    };
+
+    ws.onerror = () => updateFooterWS(false);
+    ws.onclose = () => {
+        updateFooterWS(false);
+        setTimeout(connectWebSocket, wsReconnectDelay);
+        wsReconnectDelay = Math.min(wsReconnectDelay * 2, 30000);
+    };
+
+    setInterval(() => { if (ws && ws.readyState === 1) ws.send('ping'); }, 20000);
+}
+
+function updateGatewayAlerts(gateways) {
+    const banner  = document.getElementById('gw-alert-banner');
+    const offline = gateways.filter(gw => !gw.online);
+
+    // Mise à jour des points dans le footer
+    gateways.forEach(gw => {
+        const dot   = document.getElementById(`gw-dot-${gw.id}`);
+        const label = document.getElementById(`gw-label-${gw.id}`);
+        if (dot)   dot.style.background = gw.online ? 'var(--success)' : 'var(--danger)';
+        if (label) label.textContent    = `${gw.name} — ${gw.ip || gw.id}`;
+    });
+
+    // Bannière gateway
+    if (offline.length === 0) {
+        banner.style.display = 'none';
+    } else {
+        const names = offline.map(gw => gw.name || gw.id).join(', ');
+        const ago   = offline.map(gw => gw.ago != null ? `${gw.ago}s` : '').join(', ');
+        document.getElementById('gw-alert-text').textContent =
+            `GATEWAY HORS LIGNE : ${names} — aucune donnée depuis ${ago}. Les positions peuvent être imprécises.`;
+        banner.style.display = 'flex';
+    }
+    _adjustBannerPadding();
+}
+
+function _adjustBannerPadding() {
+    const gwVisible  = document.getElementById('gw-alert-banner').style.display === 'flex';
+    const bleVisible = document.getElementById('ble-alert-banner').style.display === 'flex';
+    const bleBanner  = document.getElementById('ble-alert-banner');
+    bleBanner.style.top = gwVisible ? '34px' : '0';
+    const banners = (gwVisible ? 1 : 0) + (bleVisible ? 1 : 0);
+    document.getElementById('main-app').style.paddingTop = banners > 0 ? (banners * 34) + 'px' : '';
+}
+
+function updateFooterWS(ok) {
+    document.querySelectorAll('.f-indicator').forEach(el => {
+        if (el.textContent.includes('WebSocket')) {
+            el.querySelector('.f-dot').style.background = ok ? 'var(--success)' : 'var(--danger)';
+        }
+    });
+}
+
+// ─── CHARGEMENT INITIAL ──────────────────────────────────────────────────────
+async function loadInitialData() {
+    const headers = { 'Authorization': 'Bearer ' + getToken() };
+    const [zonesRes, alertsRes] = await Promise.all([
+        fetch(API + '/api/zones',  { headers }),
+        fetch(API + '/api/alerts', { headers }),
+    ]);
+    if (zonesRes.ok)  ZONES  = await zonesRes.json();
+    if (alertsRes.ok) ALERTS = await alertsRes.json();
+
+    // Charger le plan du bâtiment pour tous les étages (lazy — on charge au besoin)
+    await loadFloorplan(currentFloor);
+    document.getElementById('map-dims').textContent = `${PLAN_WIDTH}m × ${PLAN_HEIGHT}m`;
+
+    renderAlerts();
+    renderFloors();
+    renderMap();
+}
+
+async function loadFloorplan(floor) {
+    if (FLOORPLAN[floor] !== undefined) return; // déjà chargé
+
+    const r = await fetch(`${API}/api/floorplan/${floor}`, {
+        headers: { 'Authorization': 'Bearer ' + getToken() },
+    });
+
+    if (r.ok) {
+        const meta = await r.json();
+        FLOORPLAN[floor] = meta; // peut être null si pas de plan
+
+        if (meta) {
+            // Mettre à jour les dimensions de référence pour l'étage courant
+            if (floor === currentFloor) {
+                PLAN_WIDTH  = meta.width  || 30;
+                PLAN_HEIGHT = meta.height || 10;
+            }
+
+            // Mettre à jour les gateways depuis le plan
+            if (meta.gateways && meta.gateways.length > 0) {
+                GATEWAYS = meta.gateways.map(gw => ({
+                    id: gw.name || gw.id,
+                    x:  toSvgX(gw.px * meta.width),
+                    y:  toSvgY(gw.py * meta.height),
+                }));
+            }
+        }
+    } else {
+        FLOORPLAN[floor] = null;
+    }
+}
+
+// ─── DÉMARRAGE ───────────────────────────────────────────────────────────────
+loadInitialData();
+connectWebSocket();
+renderFloors();
+renderPersonnel();
+window.addEventListener('resize', () => { updateFloorplanBg(); updateScaleBar(); });
+setTimeout(updateScaleBar, 100);
+
+// ─── STATUT GATEWAYS ─────────────────────────────────────────────────────────
+async function pollGatewayStatus() {
+    try {
+        const r = await fetch(API + '/api/gateways', {
+            headers: { 'Authorization': 'Bearer ' + getToken() }
+        });
+        if (!r.ok) return;
+        const gateways = await r.json();
+        gateways.forEach(gw => {
+            const dot   = document.getElementById('gw-dot-' + gw.id);
+            const label = document.getElementById('gw-label-' + gw.id);
+            if (!dot) return;
+            dot.style.background = gw.online ? 'var(--success)' : 'var(--danger)';
+            const ago = gw.ago !== null ? ` (${gw.ago}s)` : ' (jamais)';
+            label.textContent = `${gw.name} — ${gw.ip}${gw.online ? '' : ago}`;
+            label.style.color = gw.online ? '' : 'var(--danger)';
+        });
+    } catch (_) {}
+}
+
+pollGatewayStatus();
+setInterval(pollGatewayStatus, 10000); // toutes les 10s
+</script>
+
+</body>
+</html>

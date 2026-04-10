@@ -1,0 +1,34 @@
+# Base de données
+*.db
+*.sqlite
+
+# Environnement virtuel Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Logs
+logs/
+*.log
+
+# Uploads (plans de bâtiment)
+uploads/
+
+# Claude Code
+.claude/
+
+# Variables d'environnement
+.env
+.env.*
+
+# Clés SSH
+*.pem
+*.key
+id_rsa
+id_bletrack
+
+# OS
+.DS_Store
+Thumbs.db

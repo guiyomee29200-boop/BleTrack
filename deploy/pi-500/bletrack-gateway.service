@@ -1,0 +1,16 @@
+[Unit]
+Description=BLETrack Gateway BLE gw2
+After=network.target bluetooth.service rfkill-unblock-bt.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/bletrack
+ExecStart=/opt/bletrack/venv/bin/python gateway/ble_scanner.py --gateway gw2 --config /opt/bletrack/config/config.yaml
+Restart=always
+RestartSec=10
+StandardOutput=append:/opt/bletrack/logs/gateway-gw2.log
+StandardError=append:/opt/bletrack/logs/gateway-gw2.log
+
+[Install]
+WantedBy=multi-user.target

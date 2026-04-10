@@ -1,0 +1,17 @@
+[Unit]
+Description=BLETrack Serveur FastAPI
+After=network.target mosquitto.service
+Wants=mosquitto.service
+
+[Service]
+Type=simple
+User=rpi
+WorkingDirectory=/opt/bletrack
+ExecStart=/opt/bletrack/venv/bin/python -m uvicorn server.main:app --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=5
+StandardOutput=append:/opt/bletrack/logs/server.log
+StandardError=append:/opt/bletrack/logs/server.log
+
+[Install]
+WantedBy=multi-user.target
